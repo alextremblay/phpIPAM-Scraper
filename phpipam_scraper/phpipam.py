@@ -15,7 +15,7 @@ device_url = base_url + device_url_partial
 auth_url = base_url + auth_url_partial
 
 
-def get_file_cookie(cj):
+def _get_file_cookie(cj):
 
     # Read the contents of the cookie file into the cookie jar
     cj.load(cookie_file)
@@ -32,7 +32,7 @@ def get_file_cookie(cj):
 
         if auth_cookie.is_expired():
 
-            return get_new_cookie(cj)
+            return _get_new_cookie(cj)
 
         else:
 
@@ -46,10 +46,10 @@ def get_file_cookie(cj):
 
     else:  # Cookie jar has no cookies in it
 
-        return get_new_cookie(cj)
+        return _get_new_cookie(cj)
 
 
-def get_new_cookie(cj):
+def _get_new_cookie(cj):
 
     auth = dict()
     auth['ipamusername'] = raw_input('PHPIPAM Username:')
@@ -70,17 +70,17 @@ def get_new_cookie(cj):
     return cj
 
 
-def get_cookie_jar():
+def _get_cookie_jar():
     cj = cookielib.LWPCookieJar()
     if os.path.isfile(cookie_file):
-        return get_file_cookie(cj)
+        return _get_file_cookie(cj)
     else:
-        return get_new_cookie(cj)
+        return _get_new_cookie(cj)
 
 
-def get_devices_from_phpipam(keyword):
+def get_device_list(keyword):
     session = requests.Session()
-    session.cookies = get_cookie_jar()
+    session.cookies = _get_cookie_jar()
     search = {'ffield': 'hostname', 'fval': keyword, 'direction': 'hostname|asc'}
     resp = session.post(device_url, search)
     soup = BeautifulSoup(resp.content, 'html.parser')
