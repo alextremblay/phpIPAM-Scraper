@@ -6,7 +6,7 @@ setup(
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description='''This package contains a python module for use by other scripts, and a commandline tool to
     quickly retrieve the names and IP addresses of devices which match a keyword argument''',
-    url='',
+    url='https://github.com/alextremblay/phpipam_scraper',
     author='Alex Tremblay',
     license='LGPLv3',
     classifiers=[
