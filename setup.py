@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = 'phpipam_scraper',
-    version = '0.2',
+    version = '0.3',
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description='''This package contains a python module for use by other scripts, and a commandline tool to
     quickly retrieve the names and IP addresses of devices which match a keyword argument''',

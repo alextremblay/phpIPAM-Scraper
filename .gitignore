@@ -1,2 +1,4 @@
 phpipam.cfg
 test.py
+*.egg-info/
+*.pyc

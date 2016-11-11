@@ -102,10 +102,11 @@ def get_device_list(keyword):
     for row in device_table.find_all('tr'):  # Get all table rows
         columns = row.find_all('td')  # Get all cells in each table row
         if len(columns) > 0:  # Ignore empty rows at start or end of range
-
+            hostname = columns[0].a
+            ip_address = columns[1]
             # Only rows that have an <a> tag in the first column are devices. Rows that have a blank field instead of
             # an ip address column[1] are of no interest to us.
-            if columns[0].a and len(columns[1]) > 0:
+            if len(ip_address) > 0 and hostname:
 
-                result.append((columns[0].a.text, columns[1].text))
+                result.append((hostname.text, ip_address.text))
     return result
