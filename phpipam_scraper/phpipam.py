@@ -6,11 +6,24 @@ import getpass
 import requests  # External module requests
 from bs4 import BeautifulSoup  # External module BeautifulSoup4
 
+
+# First time setup
+if not os.path.exists('phpipam.cfg'):
+    print('PHPIPAM configuration not found! Please enter the URL for your PHPIPAM installation')
+    print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
+    base_url = raw_input('PHPIPAM URL:')
+    with open('phpipam.cfg', 'w') as config:
+        config.write(base_url)
+    print('Configuration saved successfully!')
+else:
+    with open('phpipam.cfg') as config:
+        base_url = config.read()
+
+
 cookie_file = os.path.expanduser('~/.local/phpipam_auth_cookie')
 device_url_partial = '/app/tools/devices/devices-print.php'
 auth_url_partial = '/app/login/login_check.php'
-with open('phpipam.cfg') as c:
-    base_url = c.read()
+
 device_url = base_url + device_url_partial
 auth_url = base_url + auth_url_partial
 
