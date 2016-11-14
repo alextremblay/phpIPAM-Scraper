@@ -1,9 +1,10 @@
 import argparse
 from sys import argv
 
+from tabulate import tabulate
 from .phpipam import get_device_list
 
-def main(keyword):
+def main():
     """
     phpipam
     USAGE: phpipam [OPTIONS] KEYWORD
@@ -20,13 +21,6 @@ def main(keyword):
         This script, when run, will connect to your configured phpIPAM installation and poll the devices list for
         any device whose hostname matches the keyword provided.
     """
-
-    results = get_device_list(keyword)
-    for result in results:
-        print('Name: {0}  ||  IP: {1}'.format(result[0], result[1]))
-
-if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('KEYWORD')
 
@@ -35,4 +29,8 @@ if __name__ == '__main__':
         print(main.__doc__)
     else:
         args = parser.parse_args()
-        main(args.KEYWORD)
+        results = get_device_list(args.KEYWORD)
+        print(tabulate(results, headers=['Hostname', 'IP Address']))
+
+if __name__ == '__main__':
+    main()

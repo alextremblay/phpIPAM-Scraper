@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = 'phpipam_scraper',
-    version = '0.3',
+    version = '0.4',
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description='''This package contains a python module for use by other scripts, and a commandline tool to
     quickly retrieve the names and IP addresses of devices which match a keyword argument''',
@@ -39,7 +39,7 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     packages = ['phpipam_scraper'],
-    install_requires=['requests', 'beautifulsoup4'],
+    install_requires=['requests', 'beautifulsoup4', 'tabulate'],
     entry_points = {
         'console_scripts': [
             'phpipam = phpipam_scraper.__main__:main'
