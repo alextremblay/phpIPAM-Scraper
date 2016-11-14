@@ -1,11 +1,4 @@
-import argparse
-from sys import argv
-
-from tabulate import tabulate
-from .phpipam import get_device_list
-
-def main():
-    """
+"""
     phpipam
     USAGE: phpipam [OPTIONS] KEYWORD
 
@@ -20,13 +13,21 @@ def main():
     SYNOPSIS:
         This script, when run, will connect to your configured phpIPAM installation and poll the devices list for
         any device whose hostname matches the keyword provided.
-    """
+"""
+import argparse
+from sys import argv
+
+from tabulate import tabulate
+from .phpipam import get_device_list
+
+
+def main():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('KEYWORD')
 
     # Print help if no arguments given, otherwise run the script
     if len(argv) < 2 or argv[1] == '-h' or argv[1] == '--help':
-        print(main.__doc__)
+        print(__doc__)  # Prints the module docstring at the start of this file
     else:
         args = parser.parse_args()
         results = get_device_list(args.KEYWORD)
