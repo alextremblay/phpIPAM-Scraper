@@ -19,10 +19,11 @@ import argparse
 from sys import argv
 
 from tabulate import tabulate
-from .phpipam import get_device_list, setup_config
+from .phpipam import IPAM
 
 
 def main():
+    ipam = IPAM()
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('KEYWORD')
 
@@ -30,10 +31,10 @@ def main():
     if len(argv) < 2 or argv[1] == '-h' or argv[1] == '--help':
         print(__doc__)  # Prints the module docstring at the start of this file
     elif argv[1] == '-r':
-        setup_config()
+        ipam.setup_config()
     else:
         args = parser.parse_args()
-        results = get_device_list(args.KEYWORD)
+        results = ipam.get_device_list(args.KEYWORD)
         print(tabulate(results, headers=['Hostname', 'IP Address']))
 
 if __name__ == '__main__':
