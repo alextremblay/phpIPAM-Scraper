@@ -2,3 +2,5 @@ phpipam.cfg
 test.py
 *.egg-info/
 *.pyc
+activate*.sh
+venv*/
