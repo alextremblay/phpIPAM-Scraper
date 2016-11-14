@@ -8,14 +8,19 @@ from bs4 import BeautifulSoup  # External module BeautifulSoup4
 
 
 # First time setup
-if not os.path.exists('phpipam.cfg'):
+def setup_config():
     print('PHPIPAM configuration not found! Please enter the URL for your PHPIPAM installation')
     print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
-    base_url = raw_input('PHPIPAM URL:')
-    base_url = base_url.rstrip('/')  # Remove any trailing slash the user might have included so it won't cause failure
+    url = raw_input('PHPIPAM URL:')
+    url = url.rstrip('/')  # Remove any trailing slash the user might have included so it won't cause failure
     with open('phpipam.cfg', 'w') as config:
-        config.write(base_url)
+        config.write(url)
     print('Configuration saved successfully!')
+    return url
+
+
+if not os.path.exists('phpipam.cfg'):
+    base_url = setup_config()
 else:
     with open('phpipam.cfg') as config:
         base_url = config.read()
