@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup  # External module BeautifulSoup4
 
 
 cookie_file = os.path.expanduser('~/.local/phpipam_auth_cookie')
-config_file = os.path.join(os.path.realpath(__file__), 'phpipam.cfg')
+config_file = os.path.join(os.path.dirname(__file__), 'phpipam.cfg')
 device_url_partial = '/app/tools/devices/devices-print.php'
 auth_url_partial = '/app/login/login_check.php'
 
