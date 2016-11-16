@@ -1,1 +1,1 @@
-from phpipam import get_device_list
+from phpipam import IPAM
