@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup  # External module BeautifulSoup4
 
 
 cookie_file = os.path.expanduser('~/.local/phpipam_auth_cookie')
+config_file = os.path.join(os.path.realpath(__file__), 'phpipam.cfg')
 device_url_partial = '/app/tools/devices/devices-print.php'
 auth_url_partial = '/app/login/login_check.php'
 
@@ -16,10 +17,10 @@ class IPAM(object):
 
     def __init__(self, hostname='default'):
         if hostname is 'default':
-            if not os.path.exists('phpipam.cfg'):
+            if not os.path.exists(config_file):
                 self.setup_config()  # Sets and saves the base url string
             else:
-                with open('phpipam.cfg') as config:
+                with open(config_file) as config:
                     self.base_url = config.read()
         else:
             self.base_url = hostname
@@ -31,7 +32,7 @@ class IPAM(object):
         print('PHPIPAM configuration not found! Please enter the URL for your PHPIPAM installation')
         print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
         self.base_url = raw_input('PHPIPAM URL:').rstrip('/')
-        with open('phpipam.cfg', 'w') as config:
+        with open(config_file, 'w') as config:
             config.write(self.base_url)
         print('Configuration saved successfully!')
 
