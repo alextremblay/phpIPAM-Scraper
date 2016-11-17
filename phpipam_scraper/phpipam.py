@@ -37,20 +37,36 @@ class IPAM(object):
         print('Configuration saved successfully!')
 
     def get_device_list(self, keyword):
+
         self.session.cookies = cookielib.LWPCookieJar()
         self._get_auth_cookie()
+
         search = {'ffield': 'hostname', 'fval': keyword, 'direction': 'hostname|asc'}
+
         resp = self.session.post(self.device_url, search)
+
         soup = BeautifulSoup(resp.content, 'html.parser')
+
         device_table = soup.find('table', id='switchManagement')
+
         result = []
         for row in device_table.find_all('tr'):  # Get all table rows
             columns = row.find_all('td')  # Get all cells in each table row
-            if len(columns) > 0:  # Ignore empty rows at start or end of range
-                hostname = columns[0].a
-                ip_address = columns[1]
+
+            # Only process rows containing <td> cells. Rows without <td> cells, like the header row at the top of the
+            # table, are ignored
+            if len(columns) > 0:
+
+                # If phpipam doesn't have any results for a given search, the first non-header row will contain a single
+                # <td> cell with a warning message in it. If we find that, we should break the loop and return an empty
+                # list
+                if 'No devices configured!' in str(columns[0]):
+                    break
+
                 # Only rows that have an <a> tag in the first column are devices. Rows that have a blank field
                 # instead of an ip address in column[1] are of no interest to us.
+                hostname = columns[0].a
+                ip_address = columns[1]
                 if len(ip_address) > 0 and hostname:
                     result.append((hostname.text, ip_address.text))
         return result
@@ -78,15 +94,11 @@ class IPAM(object):
             auth_cookie = auth_cookie[0]
 
             if auth_cookie.is_expired():
-
                 self._get_new_cookie()
 
             else:
-
-                # Update the expiry time on the cookie
+                # Update the expiry time on the cookie and put it back in the jar
                 auth_cookie.expires += 1800
-
-                # Put the updated auth cookie back into the cookie jar
                 cj.set_cookie(auth_cookie)
 
         else:  # Cookie jar has no cookies in it
