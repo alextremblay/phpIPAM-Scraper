@@ -19,7 +19,7 @@ import argparse
 from sys import argv
 
 from tabulate import tabulate
-from .phpipam import IPAM
+from .old_phpipam import IPAM
 
 
 def main():

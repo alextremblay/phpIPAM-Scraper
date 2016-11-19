@@ -1,1 +1,1 @@
-from phpipam import IPAM
+from old_phpipam import IPAM
