@@ -1,8 +1,40 @@
 from setuptools import setup
+from setuptools.command.install import install
+import os
+import sys
+import ConfigParser
+
+
+class ExtendedInstall(install):
+    def run(self):
+        install.run(self)
+        print('phpIPAM Scraper setup: Please enter the URL for your phpIPAM installation')
+        print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
+        url = raw_input('phpIPAM URL:').rstrip('/')
+        if sys.platform == 'win32':
+            paths = [
+                os.path.join(os.getenv('LOCALAPPDATA'), 'phpipam', 'phpipam.cfg')
+                ]
+        else:
+            paths = [
+                os.path.join('/', 'usr', 'local', 'phpipam.cfg'),
+                os.path.expanduser('~/.local/phpipam.cfg')
+                ]
+        config = ConfigParser.ConfigParser()
+        config.add_section('phpipam')
+        config.set('phpipam', 'url', url)
+        for path in paths:
+            try:
+                with open(path, 'w') as f:
+                    config.write(f)
+            except IOError:
+                pass
+
 
 setup(
-    name = 'phpipam_scraper',
-    version = '0.4',
+    name='phpipam_scraper',
+    version='0.5',
+    cmdclass={'install': ExtendedInstall},
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description='''This package contains a python module for use by other scripts, and a commandline tool to
     quickly retrieve the names and IP addresses of devices which match a keyword argument''',
@@ -38,10 +70,11 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    packages = ['phpipam_scraper'],
+    packages=['phpipam_scraper'],
     install_requires=['requests', 'beautifulsoup4', 'tabulate'],
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'phpipam = phpipam_scraper.__main__:main'
         ]
-})
+    }
+)
