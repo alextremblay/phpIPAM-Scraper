@@ -5,3 +5,4 @@ test.py
 activate*.sh
 venv*/
 .cache/
+testing.ipynb
