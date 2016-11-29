@@ -54,23 +54,21 @@ class IPAM(object):
             return result
 
     def login(self):
-        authed = False
-        while not authed:
-            auth = self.get_credentials()
-            response = self.session.post(self._auth_url_path, data=auth)
-            if 'Invalid username' in response.content:
-                print('PHPIPAM error: Invalid username or password. Please try again')
-            else:
-                authed = True
+        auth = self.get_credentials()
+        response = self.session.post(self._auth_url_path, data=auth)
+        if 'Invalid username' in response.content:
+            print('PHPIPAM error: Invalid username or password. Please try again')
+            self._username = None
+            self._password = None
+            self.login()
+
 
     def get_credentials(self):
         auth = dict()
-        if self._username:
-            auth['ipamusername'] = self._username
-        else:
-            auth['ipamusername'] = raw_input('PHPIPAM Username:')
-        if self._password:
-            auth['ipampassword'] = self._password
-        else:
-            auth['ipampassword'] = getpass.getpass('PHPIPAM Password:')
+        if not self._username:
+            self._username = raw_input('phpIPAM Username:')
+        auth['ipamusername'] = self._username
+        if not self._password:
+            self._password = getpass.getpass('phpIPAM Password:')
+        auth['ipampassword'] = self._password
         return auth

@@ -22,13 +22,15 @@ import config
 
 
 @click.group(invoke_without_command=True)
+@click.option('-u', '--username', prompt='phpIPAM Username:')
+@click.option('-p', '--password', prompt='phpIPAM Password:')
 @click.pass_context
-def cli(ctx):
+def cli(ctx, username, password):
     if ctx.invoked_subcommand is None:
-        ctx.ipam = IPAM()
+        ctx.obj = IPAM(username, password)
         ctx.invoke(repl)
     elif ctx.invoked_subcommand is not 'set-url':
-        ctx.ipam = IPAM()
+        ctx.obj = IPAM(username, password)
 
 
 @cli.command(name='set-url')
@@ -39,11 +41,11 @@ def set_url(url):
 
 
 @cli.command()
-@click.pass_context
+@click.pass_obj
 @click.option('-d', '--deep', is_flag=True)
 @click.argument('keyword')
-def get(ctx, keyword, deep):
-    results = ctx.ipam.get(keyword)
+def get(obj, keyword, deep):
+    results = obj.get(keyword)
     click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
 
 
