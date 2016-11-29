@@ -1,6 +1,3 @@
-from time import time
-import cookielib
-import os
 import getpass
 
 from .config import get_url
@@ -11,9 +8,9 @@ from bs4 import BeautifulSoup  # External module BeautifulSoup4
 
 class IPAM(object):
 
-    def __init__(self, username, password, url=None):
-        self._username = username if username else None
-        self._password = password if password else None
+    def __init__(self, username=None, password=None, url=None):
+        self._username = username
+        self._password = password
         self._url = url if url else get_url()
         self._device_url_path = self._url + '/app/tools/devices/devices-print.php'
         self._auth_url_path = self._url + '/app/login/login_check.php'
@@ -38,11 +35,13 @@ class IPAM(object):
             for row in device_table.find_all('tr'):
                 # Get all cells in each table row
                 columns = row.find_all('td')
-                # Only process rows containing <td> cells. Rows without <td> cells, like the header row at the top of the
+                # Only process rows containing <td> cells.
+                # Rows without <td> cells, like the header row at the top of the
                 # table, are ignored
                 if len(columns) > 0:
-                    # If phpipam doesn't have any results for a given search, the first non-header row will contain a single
-                    # <td> cell with a warning message in it. If we find that, we should break the loop and return an empty
+                    # If phpipam doesn't have any results for a given search,
+                    # the first non-header row will contain a single <td> cell with a warning message in it.
+                    # If we find that, we should break the loop and return an empty
                     # list
                     if 'No devices configured!' in str(columns[0]):
                         break

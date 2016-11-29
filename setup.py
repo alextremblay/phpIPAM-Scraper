@@ -1,18 +1,4 @@
 from setuptools import find_packages, setup
-from setuptools.command.install import install
-from setuptools.command.develop import develop
-import os
-import sys
-import ConfigParser
-
-def _post_install():
-    # since our package may have just been installed, we need to update our PYTHONPATH
-    import site
-    reload(site)
-    # Now we can import our setup function
-    from phpipam_scraper.config import set_url
-
-
 
 
 setup(
@@ -54,10 +40,10 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     packages=['phpipam_scraper'],
-    install_requires=['requests', 'beautifulsoup4', 'tabulate', 'click'],
+    install_requires=['requests', 'beautifulsoup4', 'tabulate', 'click', 'click-repl'],
     entry_points={
         'console_scripts': [
-            'phpipam = phpipam_scraper.__main__:main'
+            'phpipam = phpipam_scraper.__main__:cli'
         ]
     }
 )

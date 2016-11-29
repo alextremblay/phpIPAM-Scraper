@@ -5,37 +5,38 @@
     DESCRIPTION: This script shows a list of all devices on phpIPAM whose hostname matches the supplied keyword
 
     ARGUMENTS:
-        Required Args:
-            KEYWORD              The IP Address of the switch you'd like to connect to.
-        OPTIONS:
-            -r                      Reset phpIPAM configuration file
-            -h, --help              Show this help message and quit.
+        KEYWORD              The IP Address of the switch you'd like to connect to.
+    OPTIONS:
+        -r                      Reset phpIPAM configuration file
+        -h, --help              Show this help message and quit.
 
     SYNOPSIS:
         This script, when run, will connect to your configured phpIPAM installation and poll the devices list for
         any device whose hostname matches the keyword provided.
 """
-import argparse
-from sys import argv
-
+import click
+import click_repl
 from tabulate import tabulate
-from .old_phpipam import IPAM
+from .phpipam import IPAM
+from .config import set_url
 
 
-def main():
+@click.group()
+@click.pass_context
+def cli(ctx):
+    ctx.forward(repl)
+
+@click.command()
+@click.argument('keyword')
+def get(keyword):
     ipam = IPAM()
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('KEYWORD')
+    results = ipam.get(keyword)
+    click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
 
-    # Print help if no arguments given, otherwise run the script
-    if len(argv) < 2 or argv[1] == '-h' or argv[1] == '--help':
-        print(__doc__)  # Prints the module docstring at the start of this file
-    elif argv[1] == '-r':
-        ipam.setup_config()
-    else:
-        args = parser.parse_args()
-        results = ipam.get_device_list(args.KEYWORD)
-        print(tabulate(results, headers=['Hostname', 'IP Address']))
+@click.command()
+@click.option('-u', '--url', prompt=True)
+def reseturl(url):
+    set_url(url)
+    click.echo('New phpIPAM URL set!')
 
-if __name__ == '__main__':
-    main()
+click_repl.register_repl('cli')
