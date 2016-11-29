@@ -33,9 +33,12 @@ def set_url(url):
     for path in paths:
         try:
             os.makedirs(os.path.dirname(path))
+        except OSError:
+            pass
+        try:
             with open(path, 'w') as f:
                 config.write(f)
-        except IOError:
+        except (IOError, OSError):
             pass
 
 
@@ -44,3 +47,8 @@ def first_time_setup():
     print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
     url = raw_input('phpIPAM URL:').rstrip('/')
     set_url(url)
+
+
+def show_config_paths():
+    for path in paths:
+        print(os.access(path, os.W_OK), path)

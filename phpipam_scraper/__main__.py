@@ -18,25 +18,34 @@ import click
 import click_repl
 from tabulate import tabulate
 from .phpipam import IPAM
-from .config import set_url
+import config
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-    ctx.forward(repl)
+    click.echo(ctx.invoked_subcommand)
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(repl)
 
-@click.command()
+
+@cli.command()
 @click.argument('keyword')
 def get(keyword):
     ipam = IPAM()
     results = ipam.get(keyword)
     click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
 
-@click.command()
-@click.option('-u', '--url', prompt=True)
-def reseturl(url):
-    set_url(url)
+
+@cli.command(name='set-url')
+@click.option('-u', '--url', prompt='Please specify a new URL to set in the phpIPAM config file')
+def set_url(url):
+    config.set_url(url)
     click.echo('New phpIPAM URL set!')
 
-click_repl.register_repl('cli')
+
+@cli.command()
+@click.pass_context
+def repl(ctx):
+    click_repl.repl(ctx)
+
