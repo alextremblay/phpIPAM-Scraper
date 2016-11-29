@@ -24,17 +24,11 @@ import config
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-    click.echo(ctx.invoked_subcommand)
     if ctx.invoked_subcommand is None:
+        ctx.ipam = IPAM()
         ctx.invoke(repl)
-
-
-@cli.command()
-@click.argument('keyword')
-def get(keyword):
-    ipam = IPAM()
-    results = ipam.get(keyword)
-    click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
+    elif ctx.invoked_subcommand is not 'set-url':
+        ctx.ipam = IPAM()
 
 
 @cli.command(name='set-url')
@@ -46,6 +40,14 @@ def set_url(url):
 
 @cli.command()
 @click.pass_context
+@click.option('-d', '--deep', is_flag=True)
+@click.argument('keyword')
+def get(ctx, keyword, deep):
+    results = ctx.ipam.get(keyword)
+    click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
+
+
+@cli.command()
+@click.pass_context
 def repl(ctx):
     click_repl.repl(ctx)
-

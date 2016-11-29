@@ -35,11 +35,16 @@ def set_url(url):
             os.makedirs(os.path.dirname(path))
         except OSError:
             pass
-        try:
-            with open(path, 'w') as f:
-                config.write(f)
-        except (IOError, OSError):
-            pass
+    writeable_paths = filter(lambda item: os.access(item, os.W_OK), paths)
+    if len(writeable_paths) == 0:
+        path_list = ''
+        for path in paths:
+            path_list += str(path) + '\n'
+        raise Exception('No viable path available to save configuration file. \n'
+                        'Please ensure you have write access to at least one of these file paths: \n' + path_list)
+    else:
+        with open(paths[0], 'w') as f:
+            config.write(f)
 
 
 def first_time_setup():
