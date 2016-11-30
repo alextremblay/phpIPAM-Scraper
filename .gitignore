@@ -6,3 +6,4 @@ activate*.sh
 venv*/
 .cache/
 testing.ipynb
+.DS_Store

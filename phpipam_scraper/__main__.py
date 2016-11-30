@@ -14,42 +14,44 @@
         This script, when run, will connect to your configured phpIPAM installation and poll the devices list for
         any device whose hostname matches the keyword provided.
 """
+import sys
+
 import click
-import click_repl
+from click_shell import shell
 from tabulate import tabulate
 from .phpipam import IPAM
 import config
 
+ipam = None
 
-@click.group(invoke_without_command=True)
-@click.option('-u', '--username', prompt='phpIPAM Username:')
-@click.option('-p', '--password', prompt='phpIPAM Password:')
+@shell(prompt='phpipam>', intro='Welcome to the phpIPAM Scraper shell utility. type a command to begin')
 @click.pass_context
+@click.option('-u', '--username')
+@click.option('-p', '--password')
 def cli(ctx, username, password):
-    if ctx.invoked_subcommand is None:
-        ctx.obj = IPAM(username, password)
-        ctx.invoke(repl)
-    elif ctx.invoked_subcommand is not 'set-url':
-        ctx.obj = IPAM(username, password)
+    global ipam
+    if username or password:
+        ipam = IPAM(username, password)
 
 
 @cli.command(name='set-url')
-@click.option('-u', '--url', prompt='Please specify a new URL to set in the phpIPAM config file')
+@click.argument('url')
 def set_url(url):
     config.set_url(url)
     click.echo('New phpIPAM URL set!')
 
 
+@cli.command(name='get-url')
+def get_url():
+    click.echo(config.get_url())
+
+
 @cli.command()
-@click.pass_obj
 @click.option('-d', '--deep', is_flag=True)
 @click.argument('keyword')
-def get(obj, keyword, deep):
-    results = obj.get(keyword)
+def get(deep, keyword):
+    global ipam
+    if ipam is None:
+        ipam = IPAM()
+    results = ipam.get_from_devices(keyword)
     click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
-
-
-@cli.command()
-@click.pass_context
-def repl(ctx):
-    click_repl.repl(ctx)
