@@ -1,9 +1,13 @@
+# Python Standard Library imports
 import getpass
+import re
 
+# Internal Module imports
 from .config import get_url
 
-import requests  # External module requests
-from bs4 import BeautifulSoup  # External module BeautifulSoup4
+# External Package imports
+import requests
+from bs4 import BeautifulSoup  # Package name: BeautifulSoup4
 
 
 class IPAM(object):
@@ -47,9 +51,18 @@ class IPAM(object):
 
 
     def get_from_search(self, keyword):
-        search_parameters = {}
+        search_parameters = {'ip': keyword, 'addresses': 'on', 'subnets': 'off', 'vlans': 'off', 'vrf': 'off'}
         soup = self.get_page(self._search_url_path, search_parameters)
-        # TODO
+        table_rows = soup.find_all('tr', class_='ipSearch')
+
+        address_array = []
+        for tr in table_rows:
+            row = []
+            for td in tr.find_all('td'):
+                row.append(td.get_text())
+            address_array.append(row)
+        address_array = [[row[2], row[0]] for row in address_array if re.match(keyword, row[2])]
+        return address_array
 
 
     def login(self):

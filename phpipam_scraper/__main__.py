@@ -54,4 +54,7 @@ def get(deep, keyword):
     if ipam is None:
         ipam = IPAM()
     results = ipam.get_from_devices(keyword)
+    if deep:
+        results += ipam.get_from_search(keyword)
+        
     click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
