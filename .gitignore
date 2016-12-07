@@ -7,3 +7,4 @@ venv*/
 .cache/
 testing.ipynb
 .DS_Store
+tests/variables.cfg

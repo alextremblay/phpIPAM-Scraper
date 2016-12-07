@@ -1,52 +1,37 @@
-from mock import Mock
-import sys
-import os
+import re
+import ConfigParser
 
 from phpipam_scraper import config
+import pytest
+
+@pytest.fixture()
+def conf():
+    conf_variables = ConfigParser.ConfigParser()
+    conf_variables.read('variables.cfg')
+    return conf_variables
 
 
-check = config.check = Mock()
-read = config.read = Mock()
-write = config.write = Mock()
-get_input = config.get_input = Mock()
-log = config.log = Mock()
-
-if sys.platform == 'win32':
-    sys_path = os.path.join(os.getenv('LOCALAPPDATA'), 'phpipam', 'phpipam.cfg')
-    user_path = os.path.join(os.getenv('USERPROFILE'), 'phpipam', 'phpipam.cfg')
-else:
-    sys_path = os.path.join('/', 'usr', 'local', 'phpipam', 'phpipam.cfg')
-    user_path = os.path.expanduser('~/.local/phpipam/phpipam.cfg')
+def test_is_the_test_rig_setup(conf):
+    assert conf.has_option('config', 'url'), 'You have not set up the testing variables file to run ' \
+                                                             'this test. Please run setup_tests.py first'
 
 
-def test_get_url_no_file():
-    check.return_value = False
-    get_input.return_value = 'http://someurl.com'
-    read.return_value = 'http://someurl.com'
-
-    try:
-        assert config.get_url_from_config_file() == 'http://someurl.com'
-    except Exception as e:
-        assert len(e.message) > 0
-
-    assert check.call_count == 2
-    assert get_input.called
-    assert get_input.call_count == 2
-    assert write.called
-    assert log.called
+def test_get_url():
+    url = config.get_url()
+    assert type(url) is str
+    assert re.match(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)', url)
 
 
-def test_get_url_file_exists():
-    check.return_value = True
-    read.return_value = 'http://someurl.com'
+def test_set_url():
+    old_url = config.get_url()
+    new_url = 'http://test.com'
+    assert config.set_url(new_url)
+    assert config.get_url() in new_url
+    assert config.set_url(old_url)
 
-    assert config.get_url_from_config_file() == 'http://someurl.com'
 
-    assert check.called
-    print(get_input.call_args)
-    print get_input.assert_not_called()
-    print write.assert_not_called()
-    print log.assert_not_called()
-
-def test_get_url_no_write_perm():
-    pass
+def test_set_url_failure(conf):
+    invalid_url = 'somerandomhostname'
+    with pytest.raises(Exception):
+        config.set_url(invalid_url)
+        config.set_url(conf.get('config', 'url'))

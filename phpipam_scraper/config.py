@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from ConfigParser import ConfigParser, NoOptionError
 
 if sys.platform == 'win32':
@@ -29,7 +30,10 @@ def get_url():
 
 
 def set_url(url):
-    config.set('phpipam', 'url', url)
+    if re.match(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)', url):
+        config.set('phpipam', 'url', url)
+    else:
+        raise Exception('Invalid URL specified. ' + url + 'does not appear to be a Fully Qualified Domain Name.')
     for path in paths:
         try:
             os.makedirs(os.path.dirname(path))
@@ -45,6 +49,7 @@ def set_url(url):
     else:
         with open(paths[0], 'w') as f:
             config.write(f)
+            return True
 
 
 def first_time_setup():

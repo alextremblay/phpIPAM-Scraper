@@ -2,8 +2,8 @@ from setuptools import find_packages, setup
 
 
 setup(
-    name='phpipam_scraper',
-    version='0.5',
+    name='phpIPAM-Scraper',
+    version='1.0.0',
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description='''This package contains a python module for use by other scripts, and a commandline tool to
     quickly retrieve the names and IP addresses of devices which match a keyword argument''',
@@ -11,7 +11,7 @@ setup(
     author='Alex Tremblay',
     license='LGPLv3',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
 
         'Environment :: Console',
 
@@ -39,8 +39,8 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    packages=['phpipam_scraper'],
-    install_requires=['requests', 'beautifulsoup4', 'tabulate', 'click', 'click-repl'],
+    packages=find_packages(),
+    install_requires=['requests', 'beautifulsoup4', 'tabulate', 'click', 'click-shell'],
     entry_points={
         'console_scripts': [
             'phpipam = phpipam_scraper.__main__:cli'
