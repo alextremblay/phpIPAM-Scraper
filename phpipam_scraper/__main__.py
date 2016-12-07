@@ -1,30 +1,19 @@
 """
-    phpipam
-    USAGE: phpipam [OPTIONS] KEYWORD
 
-    DESCRIPTION: This script shows a list of all devices on phpIPAM whose hostname matches the supplied keyword
-
-    ARGUMENTS:
-        KEYWORD              The IP Address of the switch you'd like to connect to.
-    OPTIONS:
-        -r                      Reset phpIPAM configuration file
-        -h, --help              Show this help message and quit.
-
-    SYNOPSIS:
-        This script, when run, will connect to your configured phpIPAM installation and poll the devices list for
-        any device whose hostname matches the keyword provided.
 """
-import sys
-
 import click
 from click_shell import shell
 from tabulate import tabulate
-from .phpipam import IPAM
+from phpipam import IPAM
 import config
 
 ipam = None
 
-@shell(prompt='phpipam>', intro='Welcome to the phpIPAM Scraper shell utility. type a command to begin')
+@shell(prompt='phpipam>',
+       intro="Welcome to the phpIPAM Scraper shell utility. type a command to begin, type '?' or 'help' for a list of "
+             "supported commands, or type 'quit' or 'exit' to quit",
+       help="A command-line tool for retrieving device information (Description, Hostname, IP Address) from a "
+            "phpIPAM installation")
 @click.pass_context
 @click.option('-u', '--username')
 @click.option('-p', '--password')
@@ -34,27 +23,54 @@ def cli(ctx, username, password):
         ipam = IPAM(username, password)
 
 
-@cli.command(name='set-url')
+@cli.group(help='Commands to retrieve info from phpIPAM. Must be called with a subcommand.')
+def get():
+    pass
+
+
+@cli.group(name='config', help="Commands for working with this tool's stored configuration. Must be called"
+                               "with a subcommand.")
+def conf():
+    pass
+
+
+@get.command(help="Search the 'IP Addresses' section of phpIPAM's search page for a given keyword")
+@click.argument('keyword')
+def search(keyword):
+    global ipam
+    if ipam is None:
+        ipam = IPAM()
+    results = ipam.get_from_search(keyword)
+    click.echo(tabulate(results, headers='keys'))
+
+
+@get.command(help="Search phpIPAM's Devices page for a given keyword")
+@click.argument('keyword')
+def device(keyword):
+    global ipam
+    if ipam is None:
+        ipam = IPAM()
+    results = ipam.get_from_devices(keyword)
+    click.echo(tabulate(results, headers='keys'))
+
+
+@get.command(help="Search all available sources in phpIPAM for a given keyword")
+@click.argument('keyword')
+def all(keyword):
+    global ipam
+    if ipam is None:
+        ipam = IPAM()
+    results = ipam.get_all(keyword)
+    click.echo(tabulate(results, headers='keys'))
+
+
+@conf.command(name='set-url', help="Specify a new phpIPAM URL for this tool to connect to from now on")
 @click.argument('url')
 def set_url(url):
     config.set_url(url)
     click.echo('New phpIPAM URL set!')
 
 
-@cli.command(name='get-url')
+@conf.command(name='get-url', help="Show the currently configured phpIPAM URL to connect to.")
 def get_url():
     click.echo(config.get_url())
-
-
-@cli.command()
-@click.option('-d', '--deep', is_flag=True)
-@click.argument('keyword')
-def get(deep, keyword):
-    global ipam
-    if ipam is None:
-        ipam = IPAM()
-    results = ipam.get_from_devices(keyword)
-    if deep:
-        results += ipam.get_from_search(keyword)
-        
-    click.echo(tabulate(results, headers=['Hostname', 'IP Address']))
