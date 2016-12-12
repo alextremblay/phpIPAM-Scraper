@@ -14,8 +14,15 @@ The tool will grab and display a switch's IP address, hostname, and description
 Module
 ------
 
-Test
-....
+*To Install:*
+This package is not yet on PyPI, so for now, clone this repo, open a terminal in the cloned repo and type
+``pip install .``
+
+*To Use:*
+``import phpipam_scraper`` or ``from phpipam_scraper import IPAM``
+The IPAM class accepts optional parameters for username, password, and URL. If these values are not supplied when
+instantiating the class, this module will attempt to prompt for them from stdin.
+see the docs folder for additional information.
 
 
 Command Line Tool
@@ -29,7 +36,7 @@ The benefit of running the shell is that phpIPAM authentication details will onl
 in memory until you exit the shell.
 
 **Warning:** Please take caution when using the shell. Since phpIPAM username and password details are stored in memory
-for as long as the shell is active, any *disreputable* program running on your computer while the shell is running
+for as long as the shell is active, any *\*disreputable\** program running on your computer while the shell is running
 **may** be able to access those details while the shell is running. Most operating systems prevent this sort of
 behaviour, but not all do, so take care.
 
