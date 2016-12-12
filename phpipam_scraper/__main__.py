@@ -1,6 +1,9 @@
 """
 
 """
+
+__version__ = '1.0.1'
+
 import click
 from click_shell import shell
 from tabulate import tabulate
@@ -10,8 +13,8 @@ import config
 ipam = None
 
 @shell(prompt='phpipam>',
-       intro="Welcome to the phpIPAM Scraper shell utility. type a command to begin, type '?' or 'help' for a list of "
-             "supported commands, or type 'quit' or 'exit' to quit",
+       intro="Welcome to the phpIPAM Scraper shell utility version " + __version__ + ". type a command to begin, type "
+             "'?' or 'help' for a list of supported commands, or type 'quit' or 'exit' to quit",
        help="A command-line tool for retrieving device information (Description, Hostname, IP Address) from a "
             "phpIPAM installation")
 @click.pass_context
