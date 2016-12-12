@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import urllib2
 from ConfigParser import ConfigParser, NoOptionError
 
 if sys.platform == 'win32':
@@ -30,10 +31,11 @@ def get_url():
 
 
 def set_url(url):
-    if re.match(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)', url):
+    if is_a_website(url) and is_a_phpipam_site(url):
         config.set('phpipam', 'url', url)
     else:
-        raise Exception('Invalid URL specified. ' + url + 'does not appear to be a Fully Qualified Domain Name.')
+        sys.tracebacklimit = 0
+        raise Exception(url + ' does not appear to be a valid phpIPAM installation. Please check the URL and try again')
     for path in paths:
         try:
             os.makedirs(os.path.dirname(path))
@@ -57,6 +59,21 @@ def first_time_setup():
     print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
     url = raw_input('phpIPAM URL:').rstrip('/')
     set_url(url)
+
+
+def is_a_website(url):
+    return re.match(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)', url)
+
+
+def is_a_phpipam_site(url):
+    try:
+        resp = urllib2.urlopen(url + '/app/login/login_check.php')
+        if resp.getcode() == 200:
+            return True
+        else:
+            return False
+    except urllib2.URLError:
+        return False
 
 
 def show_config_paths():
