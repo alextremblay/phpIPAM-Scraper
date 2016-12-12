@@ -31,7 +31,7 @@ def get():
     pass
 
 
-@cli.group(name='config', help="Commands for working with this tool's stored configuration. Must be called"
+@cli.group(name='config', help="Commands for working with this tool's stored configuration. Must be called "
                                "with a subcommand.")
 def conf():
     pass
