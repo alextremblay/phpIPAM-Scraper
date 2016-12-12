@@ -1,13 +1,14 @@
 import re
-import ConfigParser
+import configparser
 
 from phpipam_scraper import config
 import pytest
 
 @pytest.fixture()
 def conf():
-    conf_variables = ConfigParser.ConfigParser()
+    conf_variables = configparser.ConfigParser()
     conf_variables.read('variables.cfg')
+    conf_variables.read('tests/variables.cfg')
     return conf_variables
 
 
@@ -25,9 +26,10 @@ def test_get_url():
 def test_set_url():
     old_url = config.get_url()
     new_url = 'http://test.com'
-    assert config.set_url(new_url)
-    assert config.get_url() in new_url
+    with pytest.raises(Exception):
+        config.set_url(new_url)
     assert config.set_url(old_url)
+    assert config.get_url() in old_url
 
 
 def test_set_url_failure(conf):

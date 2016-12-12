@@ -1,6 +1,6 @@
-import ConfigParser
+import configparser
 
-conf_variables = ConfigParser.ConfigParser()
+conf_variables = configparser.ConfigParser()
 conf_variables.add_section('config')
 conf_variables.add_section('phpipam')
 conf_variables.add_section('test variables')

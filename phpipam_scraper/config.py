@@ -1,8 +1,9 @@
 import os
 import sys
 import re
-import urllib2
-from ConfigParser import ConfigParser, NoOptionError
+from configparser import ConfigParser, NoOptionError
+
+import requests
 
 if sys.platform == 'win32':
     paths = [
@@ -41,7 +42,7 @@ def set_url(url):
             os.makedirs(os.path.dirname(path))
         except OSError:
             pass
-    writeable_paths = filter(lambda item: os.access(item, os.W_OK), paths)
+    writeable_paths = [path for path in paths if os.access(path, os.W_OK)]
     if len(writeable_paths) == 0:
         path_list = ''
         for path in paths:
@@ -66,13 +67,10 @@ def is_a_website(url):
 
 
 def is_a_phpipam_site(url):
-    try:
-        resp = urllib2.urlopen(url + '/app/login/login_check.php')
-        if resp.getcode() == 200:
-            return True
-        else:
-            return False
-    except urllib2.URLError:
+    resp = requests.get(url + '/app/login/login_check.php')
+    if resp.status_code == 200:
+        return True
+    else:
         return False
 
 

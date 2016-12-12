@@ -7,8 +7,8 @@ __version__ = '1.0.1'
 import click
 from click_shell import shell
 from tabulate import tabulate
-from phpipam import IPAM
-import config
+from .phpipam import IPAM
+from .config import set_url, get_url
 
 ipam = None
 
@@ -70,10 +70,10 @@ def all(keyword):
 @conf.command(name='set-url', help="Specify a new phpIPAM URL for this tool to connect to from now on")
 @click.argument('url')
 def set_url(url):
-    config.set_url(url)
+    set_url(url)
     click.echo('New phpIPAM URL set!')
 
 
 @conf.command(name='get-url', help="Show the currently configured phpIPAM URL to connect to.")
 def get_url():
-    click.echo(config.get_url())
+    click.echo(get_url())

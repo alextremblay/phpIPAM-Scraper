@@ -1,5 +1,5 @@
 import re
-import ConfigParser
+import configparser
 
 from phpipam_scraper.__main__ import cli
 from click.testing import CliRunner
@@ -7,8 +7,9 @@ import pytest
 
 @pytest.fixture()
 def conf():
-    conf_variables = ConfigParser.ConfigParser()
+    conf_variables = configparser.ConfigParser()
     conf_variables.read('variables.cfg')
+    conf_variables.read('tests/variables.cfg')
     return conf_variables
 
 

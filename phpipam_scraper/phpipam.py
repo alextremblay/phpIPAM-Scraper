@@ -3,7 +3,7 @@ import getpass
 import re
 
 # Internal Module imports
-from phpipam_scraper.config import get_url
+from .config import get_url
 
 # External Package imports
 import requests
@@ -73,7 +73,7 @@ class IPAM(object):
         '''
         auth = self.get_credentials()
         response = self.session.post(self._auth_url_path, data=auth)
-        if 'Invalid username' in response.content:
+        if 'Invalid username' in response.text:
             print('PHPIPAM error: Invalid username or password. Please try again')
             self._username = None
             self._password = None
@@ -108,7 +108,7 @@ class IPAM(object):
             raise Exception('Woops! We made contact with the server you configured, but received a "Page Not Found" '
                             'error from it. Please double-check your configured phpIPAM URL by running '
                             '"phpipam get-url" or "phpipam set-url" from your command line.')
-        soup = BeautifulSoup(page.content, 'html.parser')
+        soup = BeautifulSoup(page.text, 'html.parser')
 
         # If the page has a <div id="login"> tag in it, that means our session token is expired. We need to
         # re-authenticate and try again
