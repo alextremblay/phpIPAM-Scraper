@@ -15,8 +15,7 @@ Module
 ------
 
 *To Install:*
-This package is not yet on PyPI, so for now, clone this repo, open a terminal in the cloned repo and type
-``pip install .``
+``pip install phpIPAM-Scraper``
 
 *To Use:*
 ``import phpipam_scraper`` or ``from phpipam_scraper import IPAM``
