@@ -22,7 +22,7 @@ This package is not yet on PyPI, so for now, clone this repo, open a terminal in
 ``import phpipam_scraper`` or ``from phpipam_scraper import IPAM``
 The IPAM class accepts optional parameters for username, password, and URL. If these values are not supplied when
 instantiating the class, this module will attempt to prompt for them from stdin.
-see the `API Doc <docs/apidoc.rst>`_ for additional information.
+see the `API Doc <https://github.com/alextremblay/phpIPAM-Scraper/blob/master/docs/apidoc.rst>`_ for additional information.
 
 
 Command Line Tool
