@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>phpipam_scraper.phpipam &#8212; phpIPAM-Scraper 1.1.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for phpipam_scraper.phpipam</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Python Standard Library imports</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="c1"># Internal Module imports</span>
+<span class="kn">from</span> <span class="nn">.config</span> <span class="k">import</span> <span class="n">get_url</span>
+
+<span class="c1"># External Package imports</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="k">import</span> <span class="n">BeautifulSoup</span>  <span class="c1"># Package name: BeautifulSoup4</span>
+<span class="kn">from</span> <span class="nn">bs4.element</span> <span class="k">import</span> <span class="n">Tag</span>
+
+
+<div class="viewcode-block" id="IPAM"><a class="viewcode-back" href="../../index.html#phpipam_scraper.phpipam.IPAM">[docs]</a><span class="k">class</span> <span class="nc">IPAM</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        The main class for this entire project. Stores all information related to a connection to a give phpIPAM</span>
+<span class="sd">        installation. During initialization, it will prompt for username and password if one is not supplied, and will</span>
+<span class="sd">        attempt to retrieve the URL for the phpIPAM installation from a config file if a URL is not specified. It will</span>
+<span class="sd">        then attempt to login and open a persistent session to process future requests.</span>
+
+<span class="sd">        :param username: The username for your phpIPAM account</span>
+<span class="sd">        :type username: str or None</span>
+<span class="sd">        :param password: The password  for your phpIPAM account</span>
+<span class="sd">        :type password: str or None</span>
+<span class="sd">        :param url: The URL to connect to</span>
+<span class="sd">        :type url: str or None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="n">url</span> <span class="k">if</span> <span class="n">url</span> <span class="k">else</span> <span class="n">get_url</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device_url_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">+</span> <span class="s1">&#39;/app/tools/devices/devices-print.php&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_search_url_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">+</span> <span class="s1">&#39;/app/tools/search/search-results.php&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_auth_url_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">+</span> <span class="s1">&#39;/app/login/login_check.php&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">session</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+
+<div class="viewcode-block" id="IPAM.get_from_devices"><a class="viewcode-back" href="../../index.html#phpipam_scraper.phpipam.IPAM.get_from_devices">[docs]</a>    <span class="k">def</span> <span class="nf">get_from_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyword</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Retrieves device information from phpIPAM&#39;s devices page</span>
+
+<span class="sd">        :param keyword: keyword to search by</span>
+<span class="sd">        :type keyword: str</span>
+<span class="sd">        :return: list of dicts containing hostname, IP, and description for each device found</span>
+<span class="sd">        :rtype: list(dict)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">search_parameters</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ffield&#39;</span><span class="p">:</span> <span class="s1">&#39;hostname&#39;</span><span class="p">,</span> <span class="s1">&#39;fval&#39;</span><span class="p">:</span> <span class="n">keyword</span><span class="p">,</span> <span class="s1">&#39;direction&#39;</span><span class="p">:</span> <span class="s1">&#39;hostname|asc&#39;</span><span class="p">}</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_url_path</span><span class="p">,</span> <span class="n">search_parameters</span><span class="p">)</span>
+        <span class="n">device_table</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;table&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;switchManagement&#39;</span><span class="p">)</span>
+        <span class="n">table_headers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Hostname&#39;</span><span class="p">,</span> <span class="s1">&#39;IP Address&#39;</span><span class="p">,</span> <span class="s1">&#39;Description&#39;</span><span class="p">,</span> <span class="s1">&#39;hosts&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;vendor&#39;</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;actions&#39;</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_dictionary</span><span class="p">(</span><span class="n">device_table</span><span class="p">,</span> <span class="n">table_headers</span><span class="p">)</span>
+        <span class="n">good_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;IP Address&#39;</span><span class="p">,</span> <span class="s1">&#39;Description&#39;</span><span class="p">,</span> <span class="s1">&#39;Hostname&#39;</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_keys</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">good_keys</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_by_ip</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="IPAM.get_from_search"><a class="viewcode-back" href="../../index.html#phpipam_scraper.phpipam.IPAM.get_from_search">[docs]</a>    <span class="k">def</span> <span class="nf">get_from_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyword</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Retrieves device information from phpIPAM&#39;s search page</span>
+
+<span class="sd">        :param keyword: keyword to search by</span>
+<span class="sd">        :type keyword: str</span>
+<span class="sd">        :return: list of dicts containing hostname, IP, and description for each device found</span>
+<span class="sd">        :rtype: list(dict)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">search_parameters</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ip&#39;</span><span class="p">:</span> <span class="n">keyword</span><span class="p">,</span> <span class="s1">&#39;addresses&#39;</span><span class="p">:</span> <span class="s1">&#39;on&#39;</span><span class="p">,</span> <span class="s1">&#39;subnets&#39;</span><span class="p">:</span> <span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="s1">&#39;vlans&#39;</span><span class="p">:</span> <span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="s1">&#39;vrf&#39;</span><span class="p">:</span> <span class="s1">&#39;off&#39;</span><span class="p">}</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_search_url_path</span><span class="p">,</span> <span class="n">search_parameters</span><span class="p">)</span>
+        <span class="n">table_rows</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;tr&#39;</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="s1">&#39;ipSearch&#39;</span><span class="p">)</span>
+        <span class="n">table_headers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;IP Address&#39;</span><span class="p">,</span> <span class="s1">&#39;Description&#39;</span><span class="p">,</span> <span class="s1">&#39;Hostname&#39;</span><span class="p">,</span> <span class="s1">&#39;other&#39;</span><span class="p">,</span> <span class="s1">&#39;device&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">,</span> <span class="s1">&#39;owner&#39;</span><span class="p">,</span> <span class="s1">&#39;note&#39;</span><span class="p">,</span> <span class="s1">&#39;actions&#39;</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_dictionary</span><span class="p">(</span><span class="n">table_rows</span><span class="p">,</span> <span class="n">table_headers</span><span class="p">)</span>
+        <span class="n">good_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;IP Address&#39;</span><span class="p">,</span> <span class="s1">&#39;Description&#39;</span><span class="p">,</span> <span class="s1">&#39;Hostname&#39;</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_keys</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">good_keys</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_by_ip</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="IPAM.get_all"><a class="viewcode-back" href="../../index.html#phpipam_scraper.phpipam.IPAM.get_all">[docs]</a>    <span class="k">def</span> <span class="nf">get_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyword</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Calls self.get_from_search and self.get_from_device together, combines their results, tags each entry with a \</span>
+<span class="sd">        source to denote where it came from</span>
+
+<span class="sd">        :param keyword: keyword to search by</span>
+<span class="sd">        :type keyword: str</span>
+<span class="sd">        :return: list of dicts containing hostname, IP, description, and source for each device found</span>
+<span class="sd">        :rtype: list(dict)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dev_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_from_devices</span><span class="p">(</span><span class="n">keyword</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">dev_results</span><span class="p">:</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;Source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;phpIPAM Device Page&quot;</span>
+        <span class="n">search_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_from_search</span><span class="p">(</span><span class="n">keyword</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">search_results</span><span class="p">:</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;Source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;phpIPAM Search Page&quot;</span>
+        <span class="k">return</span> <span class="n">dev_results</span> <span class="o">+</span> <span class="n">search_results</span></div>
+
+    <span class="k">def</span> <span class="nf">_login</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Logs in to phpIPAM using stored credentials, checks for failure, tries again until success</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">auth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_credentials</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_auth_url_path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">auth</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;Invalid username&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;PHPIPAM error: Invalid username or password. Please try again&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_username</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_password</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_credentials</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Checks to see if phpIPAM username / password are defined, prompts user for input if they are not.</span>
+
+<span class="sd">        :return: a dictionary containing username / password, formatted to be posted to phpIPAM&#39;s login page</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">auth</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_username</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_username</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s1">&#39;phpIPAM Username:&#39;</span><span class="p">)</span>
+        <span class="n">auth</span><span class="p">[</span><span class="s1">&#39;ipamusername&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_username</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_password</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span><span class="s1">&#39;phpIPAM Password:&#39;</span><span class="p">)</span>
+        <span class="n">auth</span><span class="p">[</span><span class="s1">&#39;ipampassword&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span>
+        <span class="k">return</span> <span class="n">auth</span>
+
+    <span class="k">def</span> <span class="nf">_get_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">post_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Given a URL, and a dictionary of data to post to the URL, this function will send the requested data to that</span>
+<span class="sd">        URL, download the resulting page, convert it into a beautiful soup object, and return it</span>
+
+<span class="sd">        :param url: URL to post to</span>
+<span class="sd">        :type url: str</span>
+<span class="sd">        :param post_data: dict of key / value pairs to post to the URL</span>
+<span class="sd">        :return: BeautifulSoup object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">post_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">page</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Woops! We made contact with the server you configured, but received a &quot;Page Not Found&quot; &#39;</span>
+                            <span class="s1">&#39;error from it. Please double-check your configured phpIPAM URL by running &#39;</span>
+                            <span class="s1">&#39;&quot;phpipam get-url&quot; or &quot;phpipam set-url&quot; from your command line.&#39;</span><span class="p">)</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">page</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;html.parser&#39;</span><span class="p">)</span>
+
+        <span class="c1"># If the page has a &lt;div id=&quot;login&quot;&gt; tag in it, that means our session token is expired. We need to</span>
+        <span class="c1"># re-authenticate and try again</span>
+        <span class="k">if</span> <span class="n">soup</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;div&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;login&#39;</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Your login to phpIPAM has expired. Please log in now.&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_page</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">post_data</span><span class="p">)</span>
+
+        <span class="c1"># If no &lt;div id=&quot;login&quot;&gt;, then we are still logged in and may proceed</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">soup</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_convert_to_dictionary</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Converts a bs4 soup html table into a list of dictionaries.</span>
+
+<span class="sd">        :param soup: bs4 soup object holding an html table</span>
+<span class="sd">        :param keys: list of strings to represent keys for the dictionaries; &lt;td&gt; cells in the table will be mapped to</span>
+<span class="sd">            these keys in the order they are found</span>
+<span class="sd">        :return: list of dicts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">address_array</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">soup</span><span class="p">:</span>
+            <span class="c1"># This variable will hold all the information we  gather from a given row of the supplied HTML table</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># Some rows are empty, and only hold a newline character. We want to skip those</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Tag</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Grab all the cells from a row</span>
+            <span class="n">tds</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;td&#39;</span><span class="p">)</span>
+
+            <span class="c1"># Ignore rows that don&#39;t match the profile we&#39;ve been given</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tds</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Map the text in each cell into a key in our &#39;entry&#39; dictionary, using the &#39;keys&#39; list provided</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">td</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tds</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span>
+
+                <span class="c1"># Strip out any newline characters in the &lt;td&gt; cell and replace them with spaces</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+                <span class="n">entry</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+
+            <span class="n">address_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">address_array</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_filter_keys</span><span class="p">(</span><span class="n">list_of_dicts</span><span class="p">,</span> <span class="n">keys_to_keep</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Given a list of keys and a list of dictionaries, this function will cycle through each dictionary in the list</span>
+<span class="sd">        and strip out any keys that are not in the list</span>
+
+<span class="sd">        :param list_of_dicts: the list of dictionaries to process</span>
+<span class="sd">        :type list_of_dicts: list(dict)</span>
+<span class="sd">        :param keys_to_keep: the keys in each dictionary you want to keep</span>
+<span class="sd">        :type keys_to_keep: list(str)</span>
+<span class="sd">        :return: the processed list of dicts</span>
+<span class="sd">        :rtype: list(dict)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_list_of_dicts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">list_of_dicts</span><span class="p">:</span>
+            <span class="n">new_obj</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys_to_keep</span><span class="p">}</span>
+            <span class="n">new_list_of_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_list_of_dicts</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_filter_by_ip</span><span class="p">(</span><span class="n">list_of_dicts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Cycles through a list of dictionaries and drops any dictionary where the value of the &#39;ip&#39; key doesn&#39;t</span>
+<span class="sd">        match the ip address regex pattern</span>
+
+<span class="sd">        :param list_of_dicts: the list of dictionaries to process</span>
+<span class="sd">        :type list_of_dicts: list(dict)</span>
+<span class="sd">        :return: the processed list of dicts</span>
+<span class="sd">        :rtype: list(dict)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ip_addr_regex</span> <span class="o">=</span> <span class="s1">r&#39;^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.)</span><span class="si">{3}</span><span class="s1">(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$&#39;</span>
+        <span class="n">new_list_of_dicts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">list_of_dicts</span><span class="p">:</span>
+            <span class="c1"># Remove whitespace at the end of our ip field to aid in matching</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;IP Address&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;IP Address&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+            <span class="c1"># if the item we&#39;re looking at has a valid IP address, add it to the new list. otherwise skip it.&#39;</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">ip_addr_regex</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;IP Address&#39;</span><span class="p">]):</span>
+                <span class="n">new_list_of_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_list_of_dicts</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Alex Tremblay.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

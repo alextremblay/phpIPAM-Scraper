@@ -10,6 +10,23 @@ Welcome to phpIPAM-Scraper's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+Welcome to the API documentation.
+
+phpipam module
+--------------
+
+.. autoclass:: phpipam_scraper.phpipam.IPAM
+    :members:
+
+
+
+config module
+-------------
+
+.. automodule:: phpipam_scraper.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 
 Indices and tables

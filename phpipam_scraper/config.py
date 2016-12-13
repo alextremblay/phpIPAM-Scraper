@@ -22,8 +22,16 @@ config.add_section('phpipam')
 
 
 def get_url():
-    config.read(paths)
+    """
+
+    Retrieves stored URL from a configuration file stored in one of 3 locations on the system. See the paths variable
+    in phpipam_scraper.config for details on where this file is stored
+
+    :return: URL of the phpIPAM site to connect to
+    :rtype: str or Exception
+    """
     try:
+        config.read(paths)
         return config.get('phpipam', 'url')
     except NoOptionError:
         first_time_setup()
@@ -32,7 +40,17 @@ def get_url():
 
 
 def set_url(url):
-    if is_a_website(url) and is_a_phpipam_site(url):
+    """
+
+    Set URL for phpIPAM site to connect to, and store variable in a onfiguration file stored in one of 3 locations on
+    the system. See the paths variable in phpipam_scraper.config for details on where this file is stored
+
+    :param url: URL of the phpIPAM site to connect to
+    :type url: str
+    :return: True on success, Exception on failure
+    :rtype: bool or Exception
+    """
+    if _is_a_website(url) and _is_a_phpipam_site(url):
         config.set('phpipam', 'url', url)
     else:
         sys.tracebacklimit = 0
@@ -56,17 +74,23 @@ def set_url(url):
 
 
 def first_time_setup():
+    """
+
+    If an attempt is make to retireve the phpIPAM URL from store config file, but no stored config file exists, this
+    function is called to prompt the user for a URL to store, and sets the URL received from the user
+
+    """
     print('phpIPAM configuration not found: Please enter the URL for your phpIPAM installation')
     print('Example: http://ipam.yourcompanyaddress.com or http://yourwebsite.com/phpipam')
     url = raw_input('phpIPAM URL:').rstrip('/')
     set_url(url)
 
 
-def is_a_website(url):
+def _is_a_website(url):
     return re.match(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)', url)
 
 
-def is_a_phpipam_site(url):
+def _is_a_phpipam_site(url):
     resp = requests.get(url + '/app/login/login_check.php')
     if resp.status_code == 200:
         return True
@@ -74,6 +98,6 @@ def is_a_phpipam_site(url):
         return False
 
 
-def show_config_paths():
+def _show_config_paths():
     for path in paths:
         print(os.access(path, os.W_OK), path)

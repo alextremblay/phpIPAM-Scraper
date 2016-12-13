@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to phpIPAM-Scraper’s documentation! &#8212; phpIPAM-Scraper 1.1.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-phpipam-scraper-s-documentation">
+<h1>Welcome to phpIPAM-Scraper&#8217;s documentation!<a class="headerlink" href="#welcome-to-phpipam-scraper-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>Welcome to the API documentation.</p>
+<div class="section" id="phpipam-module">
+<h2>phpipam module<a class="headerlink" href="#phpipam-module" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="phpipam_scraper.phpipam.IPAM">
+<em class="property">class </em><code class="descclassname">phpipam_scraper.phpipam.</code><code class="descname">IPAM</code><span class="sig-paren">(</span><em>username=None</em>, <em>password=None</em>, <em>url=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/phpipam.html#IPAM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.phpipam.IPAM" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main class for this entire project. Stores all information related to a connection to a give phpIPAM
+installation. During initialization, it will prompt for username and password if one is not supplied, and will
+attempt to retrieve the URL for the phpIPAM installation from a config file if a URL is not specified. It will
+then attempt to login and open a persistent session to process future requests.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>username</strong> (<em>str</em><em> or </em><em>None</em>) &#8211; The username for your phpIPAM account</li>
+<li><strong>password</strong> (<em>str</em><em> or </em><em>None</em>) &#8211; The password  for your phpIPAM account</li>
+<li><strong>url</strong> (<em>str</em><em> or </em><em>None</em>) &#8211; The URL to connect to</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="phpipam_scraper.phpipam.IPAM.get_all">
+<code class="descname">get_all</code><span class="sig-paren">(</span><em>keyword</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/phpipam.html#IPAM.get_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.phpipam.IPAM.get_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls self.get_from_search and self.get_from_device together, combines their results, tags each entry with a         source to denote where it came from</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>keyword</strong> (<em>str</em>) &#8211; keyword to search by</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of dicts containing hostname, IP, description, and source for each device found</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list(dict)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="phpipam_scraper.phpipam.IPAM.get_from_devices">
+<code class="descname">get_from_devices</code><span class="sig-paren">(</span><em>keyword</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/phpipam.html#IPAM.get_from_devices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.phpipam.IPAM.get_from_devices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves device information from phpIPAM&#8217;s devices page</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>keyword</strong> (<em>str</em>) &#8211; keyword to search by</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of dicts containing hostname, IP, and description for each device found</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list(dict)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="phpipam_scraper.phpipam.IPAM.get_from_search">
+<code class="descname">get_from_search</code><span class="sig-paren">(</span><em>keyword</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/phpipam.html#IPAM.get_from_search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.phpipam.IPAM.get_from_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves device information from phpIPAM&#8217;s search page</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>keyword</strong> (<em>str</em>) &#8211; keyword to search by</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of dicts containing hostname, IP, and description for each device found</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list(dict)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-phpipam_scraper.config">
+<span id="config-module"></span><h2>config module<a class="headerlink" href="#module-phpipam_scraper.config" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="phpipam_scraper.config.first_time_setup">
+<code class="descclassname">phpipam_scraper.config.</code><code class="descname">first_time_setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/config.html#first_time_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.config.first_time_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an attempt is make to retireve the phpIPAM URL from store config file, but no stored config file exists, this
+function is called to prompt the user for a URL to store, and sets the URL received from the user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="phpipam_scraper.config.get_url">
+<code class="descclassname">phpipam_scraper.config.</code><code class="descname">get_url</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/config.html#get_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.config.get_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves stored URL from a configuration file stored in one of 3 locations on the system. See the paths variable
+in phpipam_scraper.config for details on where this file is stored</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">URL of the phpIPAM site to connect to</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str or Exception</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="phpipam_scraper.config.set_url">
+<code class="descclassname">phpipam_scraper.config.</code><code class="descname">set_url</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phpipam_scraper/config.html#set_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#phpipam_scraper.config.set_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set URL for phpIPAM site to connect to, and store variable in a onfiguration file stored in one of 3 locations on
+the system. See the paths variable in phpipam_scraper.config for details on where this file is stored</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>url</strong> (<em>str</em>) &#8211; URL of the phpIPAM site to connect to</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True on success, Exception on failure</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool or Exception</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to phpIPAM-Scraper&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#phpipam-module">phpipam module</a></li>
+<li><a class="reference internal" href="#module-phpipam_scraper.config">config module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Alex Tremblay.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

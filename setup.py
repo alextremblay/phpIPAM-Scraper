@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='phpIPAM-Scraper',
-    version='1.1.0',
+    version='1.1.2',
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description='''This package contains a python module for use by other scripts, and a commandline tool to
     quickly retrieve the names and IP addresses of devices which match a keyword argument''',
