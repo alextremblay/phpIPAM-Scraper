@@ -1,7 +1,15 @@
+
+
 import os
 import sys
 import re
-from configparser import ConfigParser, NoOptionError
+
+PY2 = sys.version_info[0] == 2
+
+if PY2:
+    from ConfigParser import ConfigParser, NoOptionError
+else:
+    from configparser import ConfigParser, NoOptionError
 
 import requests
 
