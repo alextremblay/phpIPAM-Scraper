@@ -1,10 +1,10 @@
-phpipam.cfg
-test.py
+
 *.egg-info/
 *.pyc
-activate*.sh
-venv*/
 .cache/
 testing.ipynb
 .DS_Store
 tests/variables.cfg
+.idea/
+phpipam_scraper/__pycache__/
+tests/__pycache__/
