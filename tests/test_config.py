@@ -1,20 +1,8 @@
 import re
-import configparser
+
 
 from phpipam_scraper import config
 import pytest
-
-@pytest.fixture()
-def conf():
-    conf_variables = configparser.ConfigParser()
-    conf_variables.read('variables.cfg')
-    conf_variables.read('tests/variables.cfg')
-    return conf_variables
-
-
-def test_is_the_test_rig_setup(conf):
-    assert conf.has_option('config', 'url'), 'You have not set up the testing variables file to run ' \
-                                                             'this test. Please run setup_tests.py first'
 
 
 def test_get_url():

@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='phpIPAM-Scraper',
-    version='1.1.3-incomplete',
+    version='1.1.4-incomplete',
     description='A python library to retrieve device IPs from a PHPipam installation',
     long_description=long_description,
     url='https://github.com/alextremblay/phpipam_scraper',
@@ -47,7 +47,7 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'configparser ; python_version < "3.2"'
+        'configparser ; python_version < "3.2"',
         'requests',
         'beautifulsoup4',
         'tabulate',

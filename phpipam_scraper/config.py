@@ -32,31 +32,46 @@ SYSTEM_FILE = os.path.join(FS_ROOT, 'etc', 'phpipam', 'config')
 USER_FILE = os.path.join(USER_DIR, '.config', 'phpipam', 'config')
 
 
-def main(executed_before=False):
-    config = ConfigParser()
+def load_config(executed_before=False):
+    parser = ConfigParser()
     # Let's read in a list of all the config files we want, and track how
     # many of them succeeded in being read
-    succeeded = config.read(SYSTEM_FILE, USER_FILE)
+    user_file_mandatory = False
+    try:
+        with open(SYSTEM_FILE) as sys_file:
+            parser.read_file(sys_file)
+    except FileNotFoundError:
+        user_file_mandatory = True
+    try:
+        with open(USER_FILE) as user_file:
+            parser.read_file(user_file)
+    except FileNotFoundError:
+        if user_file_mandatory:
+            # We were unable to load either the system-wide config or the
+            # user config.
+            if executed_before:
+                # If we've run this function before and still can't find valid
+                # configs, then something has gone wrong.
+                raise Exception(
+                    "Something has gone wrong. Unable to verify the "
+                    "configuration file that was just created. Please "
+                    "verify the existence and permissions of"
+                    + USER_FILE)
+            else:
+                # Looks like we'll need to generate new config info
+                # and try again.
+                get_new_config()
+                return load_config(executed_before=True)
 
-    if len(succeeded) is 0:
-        # There is no configuration information on this system
-        if executed_before:
-            # Something is wrong. We've run the main function twice and still
-            #  don't have valid configuration data. We need to bail now
-            # before we get stuck in an infinite loop
-            raise Exception("Something went wrong. Unable to retrieve "
-                            "configuration information from your system. "
-                            "Please submit an issue for this at "
-                            "https://github.com/alextremblay/phpipam-scraper")
-        # Generate configuration data to populate the user config file, then
-        # try again
-        get_new_config()
-        main()
+        else:
+            pass
 
+    # We now have our config data loaded and are ready to pass it on to the
+    # client
     config_data = {
-        "URL": config['main']['URL'],
-        "User": config.get('main', 'User', fallback=None),
-        "Pass": config.get('main', 'Pass', fallback=None)
+        "URL": parser['main']['URL'],
+        "User": parser.get('main', 'User', fallback=None),
+        "Pass": parser.get('main', 'Pass', fallback=None)
     }
 
     return config_data
@@ -66,28 +81,45 @@ def get_new_config():
     print("It seems your phpIPAM Scraper installation is not yet configured "
           "for use. Please answer the following questions to configure "
           "phpIPAM Scraper:")
-    config = ConfigParser()
+    parser = ConfigParser()
+    parser['main'] = {}  # Initialize the 'main' section of the config
     url = input('phpIPAM URL: ')
-    if url[:4] is not 'http':
-        url = 'http://'+url
-
+    # Add in the protocol specifier if it isn't already there
+    if 'http' not in url[:4]:
+        url = 'http://' + url
     # take out the trailing slash, we'll add it back in later
     url = url.rstrip('/')
 
-    config['main'][url] = url
+    parser['main']['URL'] = url
     username = input('phpIPAM Username (Optional. Press Enter to skip): ')
     if len(username) is not 0:
-        config['main']['User'] = username
+        parser['main']['User'] = username
+
     password = getpass('phpIPAM Password (Optional. Press Enter to skip): ')
     if len(password) is not 0:
-        config['main']['Pass'] = password
+        parser['main']['Pass'] = password
 
     print("Thank you for providing the requested information. If you are "
           "ready to proceed, please press 'y'. If you have made an error and "
           "wish to start over, press any other key")
-    if input("proceed? ") is 'y':
-        assure_path_exists(USER_FILE)
-        config.write(USER_FILE)
+    response = input("Proceed? ")
+    if 'y' in response:
+        try:
+            assure_path_exists(USER_FILE)
+            with open(USER_FILE, 'w') as file:
+                parser.write(file)
+            print("Configuration data successfully saved to " + USER_FILE +
+                  ". If you would like to make this configuration globally "
+                  "accessible to all users on your system, please copy it to "
+                  + SYSTEM_FILE)
+        except PermissionError:
+            red_color = '\033[91m'
+            no_color = '\033[0m'
+            sys.exit(
+                red_color + "Error: Unable to save configuration. Please "
+                "ensure that you have permission to write to " + USER_FILE +
+                " and to create this folder path if it doesn't exist" + no_color
+            )
     else:
         get_new_config()
 
@@ -98,4 +130,4 @@ def assure_path_exists(path):
         os.makedirs(folder)
 
 
-main()
+config = load_config()
