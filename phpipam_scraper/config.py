@@ -32,7 +32,19 @@ SYSTEM_FILE = os.path.join(FS_ROOT, 'etc', 'phpipam', 'config')
 USER_FILE = os.path.join(USER_DIR, '.config', 'phpipam', 'config')
 
 
+# These are the variable that users of our module will use
+url = None
+username = None
+password = None
+
+
 def load_config(executed_before=False):
+    # This function alters global variables. Let's put this up here so it's
+    # easy to see
+    global url
+    global username
+    global password
+
     parser = ConfigParser()
     # Let's read in a list of all the config files we want, and track how
     # many of them succeeded in being read
@@ -61,20 +73,15 @@ def load_config(executed_before=False):
                 # Looks like we'll need to generate new config info
                 # and try again.
                 get_new_config()
-                return load_config(executed_before=True)
 
         else:
             pass
 
-    # We now have our config data loaded and are ready to pass it on to the
-    # client
-    config_data = {
-        "URL": parser['main']['URL'],
-        "User": parser.get('main', 'User', fallback=None),
-        "Pass": parser.get('main', 'Pass', fallback=None)
-    }
-
-    return config_data
+    # We now have our config data loaded and are ready to commit it to module
+    #  memory
+    url = parser['main']['URL']
+    username = parser.get('main', 'User', fallback=None)
+    password = parser.get('main', 'Pass', fallback=None)
 
 
 def get_new_config():
@@ -108,10 +115,11 @@ def get_new_config():
             assure_path_exists(USER_FILE)
             with open(USER_FILE, 'w') as file:
                 parser.write(file)
-            print("Configuration data successfully saved to " + USER_FILE +
-                  ". If you would like to make this configuration globally "
-                  "accessible to all users on your system, please copy it to "
+            print("Configuration data successfully saved to:\n" + USER_FILE +
+                  "\nIf you would like to make this configuration globally "
+                  "accessible to all users on your system, please copy it to:\n"
                   + SYSTEM_FILE)
+            load_config(executed_before=True)
         except PermissionError:
             red_color = '\033[91m'
             no_color = '\033[0m'
@@ -130,4 +138,4 @@ def assure_path_exists(path):
         os.makedirs(folder)
 
 
-config = load_config()
+load_config()
