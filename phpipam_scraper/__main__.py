@@ -8,7 +8,7 @@ import click
 from click_shell import shell
 from tabulate import tabulate
 from .phpipam import IPAM
-from .config import set_url, get_url
+from .config import load_config, get_new_config, url
 
 ipam = None
 
@@ -59,7 +59,7 @@ def device(keyword):
 
 @get.command(help="Search all available sources in phpIPAM for a given keyword")
 @click.argument('keyword')
-def all(keyword):
+def combined(keyword):
     global ipam
     if ipam is None:
         ipam = IPAM()
@@ -67,13 +67,14 @@ def all(keyword):
     click.echo(tabulate(results, headers='keys'))
 
 
-@conf.command(name='set-url', help="Specify a new phpIPAM URL for this tool to connect to from now on")
-@click.argument('url')
-def set_url(url):
-    set_url(url)
-    click.echo('New phpIPAM URL set!')
+@conf.command(name='run-setup', help="Re-runs the configuration setup script "
+                                     "to generate a new config file")
+def run_setup():
+    get_new_config()
 
 
-@conf.command(name='get-url', help="Show the currently configured phpIPAM URL to connect to.")
+@conf.command(name='get-url', help="Show the currently configured phpIPAM URL "
+                                   "to connect to.")
 def get_url():
-    click.echo(get_url())
+    load_config()
+    click.echo(url)
