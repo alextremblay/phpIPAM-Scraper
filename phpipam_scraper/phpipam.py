@@ -4,6 +4,7 @@ import re
 
 # Internal Module imports
 import config
+config.load_config()
 
 # External Package imports
 import requests
@@ -27,9 +28,9 @@ class IPAM(object):
         :param url: The URL to connect to
         :type url: str or None
         """
-        self._username = username
-        self._password = password
-        self._url = url if url else get_url()
+        self._username = username if username else config.username
+        self._password = password if password else config.password
+        self._url = url if url else config.url
         self._device_url_path = self._url + '/app/tools/devices/devices-print.php'
         self._search_url_path = self._url + '/app/tools/search/search-results.php'
         self._auth_url_path = self._url + '/app/login/login_check.php'
@@ -118,7 +119,7 @@ class IPAM(object):
         """
         auth = dict()
         if not self._username:
-            self._username = raw_input('phpIPAM Username:')
+            self._username = input('phpIPAM Username:')
         auth['ipamusername'] = self._username
         if not self._password:
             self._password = getpass.getpass('phpIPAM Password:')
