@@ -1,0 +1,5 @@
+[main]
+url = http://localhost
+user = TestUser
+pass = TestPassword
+

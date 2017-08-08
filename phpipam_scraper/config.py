@@ -22,9 +22,6 @@ from getpass import getpass
 
 PY2 = sys.version_info[0] == 2
 OS = sys.platform
-if PY2:
-    # noinspection PyUnresolvedReferences
-    input = raw_input
 
 FS_ROOT = 'C:' if OS is 'win32' else '/'
 USER_DIR = os.path.expanduser('~')
@@ -46,17 +43,40 @@ def load_config(executed_before=False):
     global password
 
     parser = ConfigParser()
-    # Let's read in a list of all the config files we want, and track how
-    # many of them succeeded in being read
+    # Lets read in the system config file, then tyhe user config file. If the
+    # system config file doesn't exist, then we MUST successfully read the
+    # user config file or create a new one
     user_file_mandatory = False
     try:
         with open(SYSTEM_FILE) as sys_file:
             parser.read_file(sys_file)
-    except FileNotFoundError:
+
+        # We now have our config data loaded and are ready to commit it
+        # to module memory
+        url = parser.get('main', 'URL', fallback=None)
+        username = parser.get('main', 'User', fallback=None)
+        password = parser.get('main', 'Pass', fallback=None)
+
+    except (FileNotFoundError, PermissionError):
         user_file_mandatory = True
     try:
         with open(USER_FILE) as user_file:
             parser.read_file(user_file)
+
+        username = parser.get('main', 'User', fallback=None)
+        password = parser.get('main', 'Pass', fallback=None)
+        if user_file_mandatory:
+            # If there is no system config file, and the user config file
+            # does not contain a URL entry, then we should fail and generate
+            # a new config file.
+            url = parser['main']['URL']
+        else:
+            # If there was a system config file found, then the URL entry in
+            # the user config file should be considered optional and
+            # supplementary
+            if parser.has_option('main', 'URL'):
+                url = parser['main']['URL']
+
     except FileNotFoundError:
         if user_file_mandatory:
             # We were unable to load either the system-wide config or the
@@ -77,11 +97,6 @@ def load_config(executed_before=False):
         else:
             pass
 
-    # We now have our config data loaded and are ready to commit it to module
-    #  memory
-    url = parser['main']['URL']
-    username = parser.get('main', 'User', fallback=None)
-    password = parser.get('main', 'Pass', fallback=None)
 
 
 def get_new_config():
@@ -90,29 +105,31 @@ def get_new_config():
           "phpIPAM Scraper:")
     parser = ConfigParser()
     parser['main'] = {}  # Initialize the 'main' section of the config
-    url = input('phpIPAM URL: ')
+    new_url = _get_input('phpIPAM URL: ')
     # Add in the protocol specifier if it isn't already there
-    if 'http' not in url[:4]:
-        url = 'http://' + url
+    if 'http' not in new_url[:4]:
+        new_url = 'http://' + new_url
     # take out the trailing slash, we'll add it back in later
-    url = url.rstrip('/')
+    new_url = new_url.rstrip('/')
 
-    parser['main']['URL'] = url
-    username = input('phpIPAM Username (Optional. Press Enter to skip): ')
-    if len(username) is not 0:
-        parser['main']['User'] = username
+    parser['main']['URL'] = new_url
+    new_username = _get_input('phpIPAM Username '
+                              '(Optional. Press Enter to skip): ')
+    if len(new_username) is not 0:
+        parser['main']['User'] = new_username
 
-    password = getpass('phpIPAM Password (Optional. Press Enter to skip): ')
-    if len(password) is not 0:
-        parser['main']['Pass'] = password
+    new_password = _get_pass('phpIPAM Password '
+                             '(Optional. Press Enter to skip): ')
+    if len(new_password) is not 0:
+        parser['main']['Pass'] = new_password
 
     print("Thank you for providing the requested information. If you are "
           "ready to proceed, please press 'y'. If you have made an error and "
           "wish to start over, press any other key")
-    response = input("Proceed? ")
+    response = _get_input("Proceed? ")
     if 'y' in response:
         try:
-            assure_path_exists(USER_FILE)
+            _assure_path_exists(USER_FILE)
             with open(USER_FILE, 'w') as file:
                 parser.write(file)
             print("Configuration data successfully saved to:\n" + USER_FILE +
@@ -132,10 +149,19 @@ def get_new_config():
         get_new_config()
 
 
-def assure_path_exists(path):
+def _assure_path_exists(path):
     folder = os.path.dirname(path)
     if not os.path.exists(folder):
         os.makedirs(folder)
 
 
-load_config()
+def _get_input(prompt):
+    if PY2:
+        # noinspection PyUnresolvedReferences
+        return raw_input(prompt)
+    else:
+        return input(prompt)
+
+
+def _get_pass(prompt):
+    return getpass(prompt)

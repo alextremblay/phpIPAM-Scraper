@@ -1,0 +1,3 @@
+[main]
+user = OverriddenUser
+pass = OverriddenPassword

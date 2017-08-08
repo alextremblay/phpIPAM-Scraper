@@ -1,0 +1,3 @@
+The purpose of this directory is to set up a scenario where both a user config file and a system config file exists, but each contains content not found in the other.
+
+It's used by the test_config.py test module

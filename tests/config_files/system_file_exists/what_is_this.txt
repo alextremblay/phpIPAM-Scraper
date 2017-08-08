@@ -1,0 +1,3 @@
+The purpose of this directory is to set up a scenario where only a system config file exists.
+
+It's used by the test_config.py test module

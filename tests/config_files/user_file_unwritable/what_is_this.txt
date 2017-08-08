@@ -1,0 +1,6 @@
+The purpose of this directory is to set up a scenario where neither a user config file nor a system config file exists, and the user config folder is un-writeable (ex. due to permission issues
+
+It's used by the test_config.py test module
+
+To ensure the success of the test, please ensure that the permissions on the "user_dir" folder within this folder are set to 440 or lower
+chmod 440 user_dir

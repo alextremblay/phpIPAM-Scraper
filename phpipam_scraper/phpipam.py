@@ -3,7 +3,7 @@ import getpass
 import re
 
 # Internal Module imports
-from .config import get_url
+import config
 
 # External Package imports
 import requests
