@@ -8,3 +8,4 @@ tests/variables.cfg
 .idea/
 phpipam_scraper/__pycache__/
 tests/__pycache__/
+tests/docker/db
