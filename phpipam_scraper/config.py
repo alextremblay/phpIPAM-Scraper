@@ -1,167 +1,158 @@
 """
-phpIPAM Scraper Config Module
-
-The purpose of this module is to store and retrieve configuration info for 
-the phpIPAM Scraper package. We want to store the URL of the phpIPAM 
-installation to connect to, as well as optionally storing a username and 
-password for said installation for scripting purposes.
-
-The configuration info should be stored in one of two places: a system-wide 
-configuration file, and a user-specific configuration file. The system-wide 
-file is optional. 
-If there is no system-wide config file, then a user-specific file is mandatory 
-and must be generated if it does not already exist. If there is a system-wide 
-config file, then the user-specific file should be treated as an optional 
-override.
+Retrieves and / or generates configuration information,
+stored in ~/.config/[app name]/config
 """
 
-import os
-import sys
-from configparser import ConfigParser
+# Std Lib imports
 from getpass import getpass
+import os
 
-PY2 = sys.version_info[0] == 2
-OS = sys.platform
+# External imports
+from easysettings import EasySettings
 
-FS_ROOT = 'C:' if OS is 'win32' else '/'
-USER_DIR = os.path.expanduser('~')
-SYSTEM_FILE = os.path.join(FS_ROOT, 'etc', 'phpipam', 'config')
-USER_FILE = os.path.join(USER_DIR, '.config', 'phpipam', 'config')
+SETTINGS_FILE_ROOT = '~/.config/'
 
+def get(name, values):
+    """The showrunner, where all the magic happens
 
-# These are the variable that users of our module will use
-url = None
-username = None
-password = None
+    This function (this whole module really) is designed to do one thing:
+    abstract away all the noise and complexity of configuration management.
+    Rather than handle user input and figuring out where and how to store that
+    input and wrestling with file permission (or lack thereof), just let this
+    module take care of it for you!
 
+    When you run this function for the first time, here's what happens:
+        - a config file is created in a folder named after your app,
+          in ~/.config (linux XDG standard location for user-specific
+          config files)
+        - the user gets prompted to answer a set of questions defined by you
+        - the answers to those questions are stored in the config file
+        - If any of those questions are marked optional, the following happens:
+            after the user is prompted to answer the question, they will be
+            asked to save their response. If they answer yes, the value will be
+            saved as normal. If they answer no, the value will not be saved,
+            and they will be prompted to answer the question again the next
+            time this function is called.
+        - The user will be notified that a config file has been created for
+          them, and reminded to set appropriate permissions for this file if it
+          contains any sensitive info.
+        - if we can't save the config file (due to permission errors or
+          something else), we warn the user of the issue, and treat all values
+          gathered as optional. The next time this function runs, the user will
+          be prompted for those values again just as if this function had never
+          been called before. This behaviour will continue until the problem
+          preventing config file saving is resolved.
+        - this function returns an object containing all the values that were
+          gathered from the user
 
-def load_config(executed_before=False):
-    # This function alters global variables. Let's put this up here so it's
-    # easy to see
-    global url
-    global username
-    global password
+    Any time this function is called afterwards:
+        - all the values specified are retrieved from the config file that was
+          created the first time around.
+        - any value marked as optional which wasn't saved last time will be
+          prompted for again, and the user will once again be given the option
+          to save it
+        - this function returns an object containing all the values that were
+          gathered from the user
 
-    parser = ConfigParser()
-    # Lets read in the system config file, then tyhe user config file. If the
-    # system config file doesn't exist, then we MUST successfully read the
-    # user config file or create a new one
-    user_file_mandatory = False
-    try:
-        with open(SYSTEM_FILE) as sys_file:
-            parser.read_file(sys_file)
+    Args:
+        name (str): The name of the application to store / retrieve config for
+        values (Sequence[Dict[str, str]]):
+            The values to get / set in our config file, in the form of:
+            [
+                {
+                    value (str): The value to get / set
+                    prompt (str):
+                        If the value hasn't been set yet, and user input is
+                        required, what question or prompt should be displayed
+                        for the user to respond to?
+                    optional (bool):
+                        if True, prompt if user wants to save the value in
+                        config file, or prompt for it every time (ie. passwords)
+                    sensitive (bool):
+                        if True, getpass will be used to record the answer to
+                        this question (meaning that any text typed in as
+                        response to this question will not be printed onto the
+                        screen
+                },
+                ...
+            ]
 
-        # We now have our config data loaded and are ready to commit it
-        # to module memory
-        url = parser.get('main', 'URL', fallback=None)
-        username = parser.get('main', 'User', fallback=None)
-        password = parser.get('main', 'Pass', fallback=None)
+    Returns:
+        Dict[str, str]: a dictionary of all the values that were gathered from
+            either the user or the config file
 
-    except (FileNotFoundError, PermissionError):
-        user_file_mandatory = True
-    try:
-        with open(USER_FILE) as user_file:
-            parser.read_file(user_file)
+    Raises:
+        #TODO: flesh this out
 
-        username = parser.get('main', 'User', fallback=None)
-        password = parser.get('main', 'Pass', fallback=None)
-        if user_file_mandatory:
-            # If there is no system config file, and the user config file
-            # does not contain a URL entry, then we should fail and generate
-            # a new config file.
-            url = parser['main']['URL']
-        else:
-            # If there was a system config file found, then the URL entry in
-            # the user config file should be considered optional and
-            # supplementary
-            if parser.has_option('main', 'URL'):
-                url = parser['main']['URL']
+    Examples:
+        >>>values = [
+        ...             {
+        ...                 'value': 'url',
+        ...                 'prompt': "Please enter the full URL of your "
+        ...                     "phpIPAM installation including the API app_id "
+        ...                     "\\nex. https://phpipam.mycompanyserver.com"
+        ...                     "/api/app_id/ \\nURL> ",
+        ...                 'optional': False,
+        ...                 'sensitive': False
+        ...             },
+        ...             {
+        ...                 'value': 'username',
+        ...                 'prompt': "Please enter your phpIPAM username: "
+        ...                           "\\nUsername> ",
+        ...                 'optional': True,
+        ...                 'sensitive': False
+        ...             },
+        ...             {
+        ...                 'value': 'password',
+        ...                 'prompt': "Please enter your phpIPAM password: "
+        ...                           "\\nPassword> ",
+        ...                 'optional': True,
+        ...                 'sensitive': True
+        ...             },
+        ...         ]
+        >>>get('phpipam', values)  # Called for the first time
+        Please enter the full URL of your phpIPAM
+        installation including the API app_id
+        ex. https://phpipam.mycompanyserver.com/api/app_id/
+        URL> >? https://my.domain.com/phpipam/api/my_app_id/
+        Please enter your phpIPAM username:
+        Username> >? mytestuser
+        Would you like to save this for later use? (yes/no)> >? yes
+        Warning: Password input may be echoed.
+        Please enter your phpIPAM password:
+        Password> >? mysupersecretpassword
+        Would you like to save this for later use? (yes/no)> >? no
+        {'password': 'mysupersecretpassword', 'username': 'mytestuser',
+         'url': 'https://my.domain.com/phpipam/api/my_app_id/'}
+        >>>get('phpipam', values)  # Called again
+        {'password': 'mysupersecretpassword', 'username': 'mytestuser',
+         'url': 'https://my.domain.com/phpipam/api/my_app_id/'}
 
-    except FileNotFoundError:
-        if user_file_mandatory:
-            # We were unable to load either the system-wide config or the
-            # user config.
-            if executed_before:
-                # If we've run this function before and still can't find valid
-                # configs, then something has gone wrong.
-                raise Exception(
-                    "Something has gone wrong. Unable to verify the "
-                    "configuration file that was just created. Please "
-                    "verify the existence and permissions of"
-                    + USER_FILE)
+    """
+    settings_file = os.path.expanduser(SETTINGS_FILE_ROOT + name + '/config')
+    if not os.path.exists(settings_file):
+        os.makedirs(os.path.dirname(settings_file), mode=0o700)
+    settings = EasySettings(settings_file)
+
+    result = dict()
+
+    for item in values:
+        key_name = item['value']
+        result[key_name] = settings.get(item['value'], default=None)
+        if not result[key_name]:
+            sensitive = item['sensitive']  # bool
+            result[key_name] = get_user_input(item['prompt'], sensitive)
+            if item['optional']:
+                choice = get_user_input("Would you like to save this for later "
+                                        "use? \n(yes/no)> ", sensitive=False)
+                if choice[0] == 'y' or choice[0] == 'Y':
+                    settings.setsave(key_name, result[key_name])
             else:
-                # Looks like we'll need to generate new config info
-                # and try again.
-                get_new_config()
+                settings.setsave(key_name, result[key_name])
 
-        else:
-            pass
+    return result
 
 
-
-def get_new_config():
-    print("It seems your phpIPAM Scraper installation is not yet configured "
-          "for use. Please answer the following questions to configure "
-          "phpIPAM Scraper:")
-    parser = ConfigParser()
-    parser['main'] = {}  # Initialize the 'main' section of the config
-    new_url = _get_input('phpIPAM URL: ')
-    # Add in the protocol specifier if it isn't already there
-    if 'http' not in new_url[:4]:
-        new_url = 'http://' + new_url
-    # take out the trailing slash, we'll add it back in later
-    new_url = new_url.rstrip('/')
-
-    parser['main']['URL'] = new_url
-    new_username = _get_input('phpIPAM Username '
-                              '(Optional. Press Enter to skip): ')
-    if len(new_username) is not 0:
-        parser['main']['User'] = new_username
-
-    new_password = _get_pass('phpIPAM Password '
-                             '(Optional. Press Enter to skip): ')
-    if len(new_password) is not 0:
-        parser['main']['Pass'] = new_password
-
-    print("Thank you for providing the requested information. If you are "
-          "ready to proceed, please press 'y'. If you have made an error and "
-          "wish to start over, press any other key")
-    response = _get_input("Proceed? ")
-    if 'y' in response:
-        try:
-            _assure_path_exists(USER_FILE)
-            with open(USER_FILE, 'w') as file:
-                parser.write(file)
-            print("Configuration data successfully saved to:\n" + USER_FILE +
-                  "\nIf you would like to make this configuration globally "
-                  "accessible to all users on your system, please copy it to:\n"
-                  + SYSTEM_FILE)
-            load_config(executed_before=True)
-        except PermissionError:
-            red_color = '\033[91m'
-            no_color = '\033[0m'
-            sys.exit(
-                red_color + "Error: Unable to save configuration. Please "
-                "ensure that you have permission to write to " + USER_FILE +
-                " and to create this folder path if it doesn't exist" + no_color
-            )
-    else:
-        get_new_config()
-
-
-def _assure_path_exists(path):
-    folder = os.path.dirname(path)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-def _get_input(prompt):
-    if PY2:
-        # noinspection PyUnresolvedReferences
-        return raw_input(prompt)
-    else:
-        return input(prompt)
-
-
-def _get_pass(prompt):
-    return getpass(prompt)
+def get_user_input(prompt: str, sensitive: bool):
+    input_function = getpass if sensitive else input
+    return input_function(prompt)
