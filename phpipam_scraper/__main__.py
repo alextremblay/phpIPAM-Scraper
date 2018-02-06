@@ -4,11 +4,11 @@
 
 __version__ = '1.1.2'
 
+import os
 import click
 from click_shell import shell
 from tabulate import tabulate
-from .phpipam import IPAM
-from .config import load_config, get_new_config, url
+from .phpipam import IPAM, get_config, delete_config
 
 ipam = None
 
@@ -28,12 +28,6 @@ def cli(ctx, username, password):
 
 @cli.group(help='Commands to retrieve info from phpIPAM. Must be called with a subcommand.')
 def get():
-    pass
-
-
-@cli.group(name='config', help="Commands for working with this tool's stored configuration. Must be called "
-                               "with a subcommand.")
-def conf():
     pass
 
 
@@ -67,14 +61,21 @@ def combined(keyword):
     click.echo(tabulate(results, headers='keys'))
 
 
+@cli.group(name='config', help="Commands for working with this tool's stored configuration. Must be called "
+                               "with a subcommand.")
+def conf():
+    pass
+
+
 @conf.command(name='run-setup', help="Re-runs the configuration setup script "
                                      "to generate a new config file")
 def run_setup():
-    get_new_config()
+    delete_config()
+    get_config()
 
 
 @conf.command(name='get-url', help="Show the currently configured phpIPAM URL "
                                    "to connect to.")
 def get_url():
-    load_config()
-    click.echo(url)
+    config = get_config()
+    click.echo(config.url)

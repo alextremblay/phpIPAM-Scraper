@@ -3,21 +3,56 @@ import getpass
 import re
 
 # Internal Module imports
-import config
-config.load_config()
+from .config import get, delete
 
 # External Package imports
 import requests
+from lxml import etree
 from bs4 import BeautifulSoup  # Package name: BeautifulSoup4
 from bs4.element import Tag
+
+def get_config():
+    values = [
+        {
+            'value': 'url',
+            'prompt': "Please enter the full URL of your phpIPAM installation "
+                      "including the API app_id \n"
+                      "ex. https://phpipam.mycompanyserver.com/api/app_id/ \n"
+                      "URL> ",
+            'optional': False,
+            'sensitive': False
+        },
+        {
+            'value': 'username',
+            'prompt': "Please enter your phpIPAM username: \n"
+                      "Username> ",
+            'optional': True,
+            'sensitive': False
+        },
+        {
+            'value': 'password',
+            'prompt': "Please enter your phpIPAM password: \n"
+                      "Password> ",
+            'optional': True,
+            'sensitive': True
+        },
+    ]
+    config_data = get('phpipam', values)
+    return config_data
+
+
+def delete_config():
+    delete('phpipam')
 
 
 class IPAM(object):
     def __init__(self, username=None, password=None, url=None):
         """
 
-        The main class for this entire project. Stores all information related to a connection to a give phpIPAM
-        installation. During initialization, it will prompt for username and password if one is not supplied, and will
+        The main class for this entire project. Stores all information
+        related to a connection to a give phpIPAM
+        installation. During initialization, it will prompt for username and
+        password if one is not supplied, and will
         attempt to retrieve the URL for the phpIPAM installation from a config file if a URL is not specified. It will
         then attempt to login and open a persistent session to process future requests.
 
@@ -28,6 +63,9 @@ class IPAM(object):
         :param url: The URL to connect to
         :type url: str or None
         """
+        if not url and not password and not username:
+            config = get_config()
+
         self._username = username if username else config.username
         self._password = password if password else config.password
         self._url = url if url else config.url

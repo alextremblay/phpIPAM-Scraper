@@ -1,0 +1,5 @@
+The purpose of this directory is to set up a scenario where the config folder for a given application doesn't exist and
+the root folder for it to be created in is writeable. This is the ideal scenario for a net-new user of a given
+application.
+
+It's used by the test_config.py test module

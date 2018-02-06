@@ -8,19 +8,17 @@ import pytest
 config_files = os.path.join(os.getcwd(), 'config_files')
 
 @pytest.yield_fixture()
-def no_file_exists():
+def test_paths():
     paths = {
-        'user_file': os.path.join(config_files, 'no_file_exists', 'user_dir',
-                                  'config'),
+        'config_file_absent': os.path.join(config_files, 'config_file_absent'),
         'system_file': os.path.join(config_files, 'no_file_exists',
                                     'system_dir', 'config')
     }
     # Ensure that the files specified in paths don't currently exist
-    for path in paths.values():
-        try:
-            os.remove(path)
-        except FileNotFoundError:
-            pass
+    try:
+        os.remove(paths['config_file_absent'] + '/testapplication')
+    except FileNotFoundError:
+        pass
 
     # Yield to the test function & begin test
     yield paths
@@ -49,13 +47,12 @@ def test_no_config_file_exists(monkeypatch, no_file_exists):
             return 'TestUser'
         if 'Password' in prompt:
             return 'TestPassword'
-        if 'Proceed' in prompt:
+        if '(yes/no)' in prompt:
             return 'y'
         else:
             assert False
 
-    monkeypatch.setattr(config, '_get_input', input_handler)
-    monkeypatch.setattr(config, '_get_pass', input_handler)
+    monkeypatch.setattr(config, 'get__user_input', input_handler)
 
     config.USER_FILE = no_file_exists['user_file']
     config.SYSTEM_FILE = no_file_exists['system_file']

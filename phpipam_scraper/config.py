@@ -10,7 +10,7 @@ import os
 # External imports
 from easysettings import EasySettings
 
-SETTINGS_FILE_ROOT = '~/.config/'
+SETTINGS_FILE_ROOT = os.getenv('XDG_CONFIG_HOME', '~/.config/')
 
 def get(name, values):
     """The showrunner, where all the magic happens
@@ -151,6 +151,18 @@ def get(name, values):
                 settings.setsave(key_name, result[key_name])
 
     return result
+
+
+def delete(name):
+    """
+    Delete config data for application, if it exists
+
+    :param name: application name whose data should be deleted
+    :return: None
+    """
+    settings_file = os.path.expanduser(SETTINGS_FILE_ROOT + name + '/config')
+    if os.path.exists(settings_file):
+        os.unlink(settings_file)
 
 
 def get_user_input(prompt: str, sensitive: bool):
