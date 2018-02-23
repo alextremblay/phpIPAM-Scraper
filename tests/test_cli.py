@@ -2,7 +2,7 @@ import re
 import configparser
 import sys
 
-from phpipam_scraper.__main__ import cli
+from phpipam_scraper.cli import main
 from click.testing import CliRunner
 import pytest
 
@@ -33,56 +33,56 @@ def runner():
 
 
 def test_help_base(runner):
-    result = runner.invoke(cli, ['--help'])
+    result = runner.invoke(main, ['--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert 'phpIPAM' in result.output
 
 
 def test_help_get(runner):
-    result = runner.invoke(cli, ['get', '--help'])
+    result = runner.invoke(main, ['get', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert 'Commands' in result.output
 
 
 def test_help_get_search(runner):
-    result = runner.invoke(cli, ['get', 'search', '--help'])
+    result = runner.invoke(main, ['get', 'search', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert "Search the 'IP Addresses' section" in result.output
 
 
 def test_help_get_device(runner):
-    result = runner.invoke(cli, ['get', 'device', '--help'])
+    result = runner.invoke(main, ['get', 'device', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert "Search phpIPAM's Devices page" in result.output
 
 
 def test_help_get_all(runner):
-    result = runner.invoke(cli, ['get', 'all', '--help'])
+    result = runner.invoke(main, ['get', 'all', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert 'Search all' in result.output
 
 
 def test_help_config(runner):
-    result = runner.invoke(cli, ['config', '--help'])
+    result = runner.invoke(main, ['config', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert 'Commands' in result.output
 
 
 def test_help_config_set(runner):
-    result = runner.invoke(cli, ['config', 'set-url', '--help'])
+    result = runner.invoke(main, ['config', 'set-url', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert 'Specify a new phpIPAM URL' in result.output
 
 
 def test_help_config_get(runner):
-    result = runner.invoke(cli, ['config', 'get-url', '--help'])
+    result = runner.invoke(main, ['config', 'get-url', '--help'])
     assert result.exit_code is 0
     assert 'Usage' in result.output
     assert 'currently configured phpIPAM URL' in result.output
@@ -92,7 +92,7 @@ def test_help_config_get(runner):
 # running 'phpipam config get-url' directly. This appears to be a flaw in click.testing, not in this application itself
 if PY2:
     def test_config_get(runner):
-        result = runner.invoke(cli, ['config', 'get-url'])
+        result = runner.invoke(main, ['config', 'get-url'])
         url_regex = r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
         assert result.exit_code is 0
         assert re.match(url_regex, result.output)
@@ -102,6 +102,6 @@ if PY2:
 if PY2:
     def test_config_set(runner, conf):
         url = conf.get('config', 'url')
-        result = runner.invoke(cli, ['config', 'set-url', url])
+        result = runner.invoke(main, ['config', 'set-url', url])
         assert result.exit_code is 0
         assert 'New phpIPAM URL set!' in result.output

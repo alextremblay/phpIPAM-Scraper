@@ -1,10 +1,10 @@
 # Python Standard Library imports
 from getpass import getpass
 import re
-from logging import getLogger
 
 # Internal Module imports
 from .config import get, delete
+from .log import getLogger
 
 # External Package imports
 import requests
@@ -12,9 +12,10 @@ import requests
 from bs4 import BeautifulSoup  # Package name: BeautifulSoup4
 from bs4.element import Tag
 
-log = getLogger('phpipam_scraper.')
+log = getLogger('main')
 
 def get_config():
+    log.debug('running get_config')
     values = [
         {
             'value': 'url',
@@ -41,10 +42,12 @@ def get_config():
         },
     ]
     config_data = get('phpipam', values)
+    log.debug_obj('config_data:', config_data)
     return config_data
 
 
 def delete_config():
+    log.debug('running delete_config')
     delete('phpipam')
 
 
@@ -67,27 +70,34 @@ class IPAM(object):
         :param url: The URL to connect to
         :type url: str or None
         """
+        log.debug_obj('Creating new IPAM instance with args:',
+                      [username, password, url])
         config = {}
+
         if not url:
             config = get_config()
+
         if url:
             self.url = url
-        elif config.get(url):
-            self.url = config.url
+        elif 'url' in config:
+            log.info('Using URL defined in phpipam config file')
+            self.url = config['url']
         else:
-            self.url = input('phpIPAM URL:')
+            raise Exception('No phpIPAM URL defined')
         if username:
             self.username = username
-        elif config.get(username):
-            self.username = config.username
+        elif 'username' in config:
+            log.info('Using username defined in phpipam config file')
+            self.username = config['username']
         else:
-            self.username = input('phpIPAM Username:')
+            raise Exception('No phpIPAM username defined')
         if password:
             self.password = password
-        elif config.get(password):
-            self.password = config.password
+        elif 'password' in config:
+            log.info('Using password defined in phpipam config file')
+            self.password = config['password']
         else:
-            self.password = getpass('phpIPAM Password:')
+            raise Exception('No phpIPAM password defined')
 
         self.token = None
         self.session = requests.session()
@@ -103,15 +113,20 @@ class IPAM(object):
         :return: list of dicts containing hostname, IP, and description for each device found
         :rtype: list(dict)
         """
+        log.info(f'Searching for {keyword} in Devices page...')
         device_url_path = self.url + '/app/tools/devices/devices-print.php'
+        log.debug(f'device_url_path: {device_url_path}')
         search_parameters = {'ffield': 'hostname', 'fval': keyword, 'direction': 'hostname|asc'}
         soup = self._get_page(device_url_path, search_parameters)
+        log.debug_obj('Devices page:', soup)
         device_table = soup.find('table', id='switchManagement')
+        log.debug_obj('Devices table:', device_table)
         table_headers = ['Hostname', 'IP Address', 'Description', 'hosts', 'type', 'vendor', 'model', 'actions']
         result = self._convert_to_dictionary(device_table, table_headers)
         good_keys = ['IP Address', 'Description', 'Hostname']
         result = self._filter_keys(result, good_keys)
         result = self._filter_by_ip(result)
+        log.debug_obj("Found: ", result)
         return result
 
     def get_from_search(self, keyword):
@@ -124,15 +139,20 @@ class IPAM(object):
         :return: list of dicts containing hostname, IP, and description for each device found
         :rtype: list(dict)
         """
+        log.info(f'Searching for {keyword} in Search page...')
         search_url_path = self.url + '/app/tools/search/search-results.php'
+        log.debug(f'search_url_path: {search_url_path}')
         search_parameters = {'ip': keyword, 'addresses': 'on', 'subnets': 'off', 'vlans': 'off', 'vrf': 'off'}
         soup = self._get_page(search_url_path, search_parameters)
+        log.debug_obj('Search page: ', soup)
         table_rows = soup.find_all('tr', class_='ipSearch')
+        log.debug_obj('Search table: ', table_rows)
         table_headers = ['IP Address', 'Description', 'Hostname', 'other', 'device', 'port', 'owner', 'note', 'actions']
         result = self._convert_to_dictionary(table_rows, table_headers)
         good_keys = ['IP Address', 'Description', 'Hostname']
         result = self._filter_keys(result, good_keys)
         result = self._filter_by_ip(result)
+        log.debug_obj("Found: ", result)
         return result
 
     def get_all(self, keyword):
@@ -146,6 +166,7 @@ class IPAM(object):
         :return: list of dicts containing hostname, IP, description, and source for each device found
         :rtype: list(dict)
         """
+        log.debug(f'get_all() called with {keyword} keyword')
         dev_results = self.get_from_devices(keyword)
         for item in dev_results:
             item['Source'] = "phpIPAM Device Page"
@@ -160,13 +181,16 @@ class IPAM(object):
         Logs in to phpIPAM using stored credentials, checks for failure, tries again until success
 
         """
+        log.info('Logging into phpIPAM...')
         auth_url_path = self.url + '/app/login/login_check.php'
         auth = {'ipamusername': self.username, 'ipampassword': self.password}
         response = self.session.post(auth_url_path, data=auth)
         if 'Invalid username' in response.text:
-            print('PHPIPAM error: Invalid username or password. Please try again')
-            self.username = None
-            self.password = None
+            log.critical('PHPIPAM error: Invalid username or password. Please try again')
+            response = input(f'phpIPAM Username: [{self.username}]')
+            if response:  # If user just pressed enter instead of filling in
+                self.username = response
+            self.password = getpass()
             self.login()
 
     def _get_page(self, url, post_data):
@@ -180,17 +204,20 @@ class IPAM(object):
         :param post_data: dict of key / value pairs to post to the URL
         :return: BeautifulSoup object
         """
+        log.debug(f'_get_page() called with url: \n{url}\n '
+                  f'And post_data: \n{post_data}')
         page = self.session.post(url, data=post_data)
         if page.status_code == 404:
             raise Exception('Woops! We made contact with the server you configured, but received a "Page Not Found" '
                             'error from it. Please double-check your configured phpIPAM URL by running '
                             '"phpipam get-url" or "phpipam set-url" from your command line.')
         soup = BeautifulSoup(page.text, 'html.parser')
+        log.debug_obj('Received page:', soup)
 
         # If the page has a <div id="login"> tag in it, that means our session token is expired. We need to
         # re-authenticate and try again
         if soup.find('div', id='login'):
-            print('Your login to phpIPAM has expired. Please log in now.')
+            log.error('Your login to phpIPAM has expired. Attempting to re-login automatically.')
             self.login()
             self._get_page(url, post_data)
 

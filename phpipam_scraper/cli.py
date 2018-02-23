@@ -8,7 +8,7 @@ import click
 from click_shell import shell
 from tabulate import tabulate
 from .main import IPAM, get_config, delete_config
-from .log import getLogger
+from .log import getLogger, enable_console_logging, enable_file_logging
 
 ipam = None
 
@@ -22,12 +22,17 @@ ipam = None
 @click.option('-p', '--password')
 @click.option('-v', '--verbose', count=True)
 def main(ctx, username, password, verbose):
-    log = getLogger('phpipam_scraper', verbose)
+    if verbose > 0 and verbose < 5:
+        enable_console_logging(verbose)
+    if verbose >= 5:
+        enable_console_logging(4)
+        enable_file_logging('/tmp/phpipam.log')
+    log = getLogger('cli')
     ctx.obj = {
         'username': username,
         'password': password
     }
-    log.debug(ctx)
+    log.debug_obj('ctx:', ctx)
 
 
 @main.group(help='Commands to retrieve info from phpIPAM. Must be called with a subcommand.')

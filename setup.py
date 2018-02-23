@@ -48,11 +48,12 @@ setup(
     packages=find_packages(),
     install_requires=[
         'easysettings',
-        'requests',
+        'requests[security]',
         'beautifulsoup4',
         'tabulate',
         'click',
-        'click-shell'],
+        'click-shell',
+        'furl'],
     extras_require={
         'test': [
             'pytest',
@@ -62,7 +63,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'phpipam = phpipam_scraper.__main__:cli'
+            'phpipam = phpipam_scraper.__main__:main'
         ]
     }
 )
