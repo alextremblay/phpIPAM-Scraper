@@ -1,15 +1,18 @@
 # Python Standard Library imports
-import getpass
+from getpass import getpass
 import re
+from logging import getLogger
 
 # Internal Module imports
 from .config import get, delete
 
 # External Package imports
 import requests
-from lxml import etree
+# from lxml import etree
 from bs4 import BeautifulSoup  # Package name: BeautifulSoup4
 from bs4.element import Tag
+
+log = getLogger('phpipam_scraper.')
 
 def get_config():
     values = [
@@ -53,8 +56,9 @@ class IPAM(object):
         related to a connection to a give phpIPAM
         installation. During initialization, it will prompt for username and
         password if one is not supplied, and will
-        attempt to retrieve the URL for the phpIPAM installation from a config file if a URL is not specified. It will
-        then attempt to login and open a persistent session to process future requests.
+        attempt to retrieve the URL for the phpIPAM installation from a config
+        file if a URL is not specified. It will then attempt to login and open
+        a persistent session to process future requests.
 
         :param username: The username for your phpIPAM account
         :type username: str or None
@@ -63,17 +67,31 @@ class IPAM(object):
         :param url: The URL to connect to
         :type url: str or None
         """
-        if not url and not password and not username:
+        config = {}
+        if not url:
             config = get_config()
+        if url:
+            self.url = url
+        elif config.get(url):
+            self.url = config.url
+        else:
+            self.url = input('phpIPAM URL:')
+        if username:
+            self.username = username
+        elif config.get(username):
+            self.username = config.username
+        else:
+            self.username = input('phpIPAM Username:')
+        if password:
+            self.password = password
+        elif config.get(password):
+            self.password = config.password
+        else:
+            self.password = getpass('phpIPAM Password:')
 
-        self._username = username if username else config.username
-        self._password = password if password else config.password
-        self._url = url if url else config.url
-        self._device_url_path = self._url + '/app/tools/devices/devices-print.php'
-        self._search_url_path = self._url + '/app/tools/search/search-results.php'
-        self._auth_url_path = self._url + '/app/login/login_check.php'
+        self.token = None
         self.session = requests.session()
-        self._login()
+        self.login()
 
     def get_from_devices(self, keyword):
         """
@@ -85,8 +103,9 @@ class IPAM(object):
         :return: list of dicts containing hostname, IP, and description for each device found
         :rtype: list(dict)
         """
+        device_url_path = self.url + '/app/tools/devices/devices-print.php'
         search_parameters = {'ffield': 'hostname', 'fval': keyword, 'direction': 'hostname|asc'}
-        soup = self._get_page(self._device_url_path, search_parameters)
+        soup = self._get_page(device_url_path, search_parameters)
         device_table = soup.find('table', id='switchManagement')
         table_headers = ['Hostname', 'IP Address', 'Description', 'hosts', 'type', 'vendor', 'model', 'actions']
         result = self._convert_to_dictionary(device_table, table_headers)
@@ -105,8 +124,9 @@ class IPAM(object):
         :return: list of dicts containing hostname, IP, and description for each device found
         :rtype: list(dict)
         """
+        search_url_path = self.url + '/app/tools/search/search-results.php'
         search_parameters = {'ip': keyword, 'addresses': 'on', 'subnets': 'off', 'vlans': 'off', 'vrf': 'off'}
-        soup = self._get_page(self._search_url_path, search_parameters)
+        soup = self._get_page(search_url_path, search_parameters)
         table_rows = soup.find_all('tr', class_='ipSearch')
         table_headers = ['IP Address', 'Description', 'Hostname', 'other', 'device', 'port', 'owner', 'note', 'actions']
         result = self._convert_to_dictionary(table_rows, table_headers)
@@ -134,35 +154,20 @@ class IPAM(object):
             item['Source'] = "phpIPAM Search Page"
         return dev_results + search_results
 
-    def _login(self):
+    def login(self):
         """
 
         Logs in to phpIPAM using stored credentials, checks for failure, tries again until success
 
         """
-        auth = self._get_credentials()
-        response = self.session.post(self._auth_url_path, data=auth)
+        auth_url_path = self.url + '/app/login/login_check.php'
+        auth = {'ipamusername': self.username, 'ipampassword': self.password}
+        response = self.session.post(auth_url_path, data=auth)
         if 'Invalid username' in response.text:
             print('PHPIPAM error: Invalid username or password. Please try again')
-            self._username = None
-            self._password = None
-            self._login()
-
-    def _get_credentials(self):
-        """
-
-        Checks to see if phpIPAM username / password are defined, prompts user for input if they are not.
-
-        :return: a dictionary containing username / password, formatted to be posted to phpIPAM's login page
-        """
-        auth = dict()
-        if not self._username:
-            self._username = input('phpIPAM Username:')
-        auth['ipamusername'] = self._username
-        if not self._password:
-            self._password = getpass.getpass('phpIPAM Password:')
-        auth['ipampassword'] = self._password
-        return auth
+            self.username = None
+            self.password = None
+            self.login()
 
     def _get_page(self, url, post_data):
         """
@@ -186,7 +191,7 @@ class IPAM(object):
         # re-authenticate and try again
         if soup.find('div', id='login'):
             print('Your login to phpIPAM has expired. Please log in now.')
-            self._login()
+            self.login()
             self._get_page(url, post_data)
 
         # If no <div id="login">, then we are still logged in and may proceed

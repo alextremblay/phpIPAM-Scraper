@@ -4,11 +4,11 @@
 
 __version__ = '1.1.2'
 
-import os
 import click
 from click_shell import shell
 from tabulate import tabulate
-from .phpipam import IPAM, get_config, delete_config
+from .main import IPAM, get_config, delete_config
+from .log import getLogger
 
 ipam = None
 
@@ -20,15 +20,21 @@ ipam = None
 @click.pass_context
 @click.option('-u', '--username')
 @click.option('-p', '--password')
-def cli(ctx, username, password):
+@click.option('-v', '--verbose', count=True)
+def main(ctx, username, password, verbose):
+    log = getLogger('phpipam_scraper', verbose)
+    ctx.obj = {
+        'username': username,
+        'password': password
+    }
+    log.debug(ctx)
+
+
+@main.group(help='Commands to retrieve info from phpIPAM. Must be called with a subcommand.')
+@click.pass_context
+def get(ctx):
     global ipam
-    if username or password:
-        ipam = IPAM(username, password)
-
-
-@cli.group(help='Commands to retrieve info from phpIPAM. Must be called with a subcommand.')
-def get():
-    pass
+    ipam = IPAM(ctx.obj['username'], ctx.obj['password'])
 
 
 @get.command(help="Search the 'IP Addresses' section of phpIPAM's search page for a given keyword")
@@ -61,21 +67,34 @@ def combined(keyword):
     click.echo(tabulate(results, headers='keys'))
 
 
-@cli.group(name='config', help="Commands for working with this tool's stored configuration. Must be called "
-                               "with a subcommand.")
+@main.group(name='config',
+            help="Commands for working with this tool's stored configuration. "
+                "Must be called with a subcommand.")
 def conf():
     pass
 
 
-@conf.command(name='run-setup', help="Re-runs the configuration setup script "
-                                     "to generate a new config file")
+@conf.command(name='set',
+              help="(re)runs the configuration setup script to generate a new "
+                   "config file")
 def run_setup():
     delete_config()
     get_config()
 
 
-@conf.command(name='get-url', help="Show the currently configured phpIPAM URL "
-                                   "to connect to.")
-def get_url():
+@conf.command(name='get',
+              help="Show the currently configured phpIPAM settings.")
+def get_info():
     config = get_config()
-    click.echo(config.url)
+    if config.get('url'):
+        click.echo("URL: " + config['url'])
+    else:
+        click.echo("URL not configured")
+    if config.get('username'):
+        click.echo("Username: " + config['username'])
+    else:
+        click.echo("Username not configured")
+    if config.get('password'):
+        click.echo("Password is configured")
+    else:
+        click.echo("Password is not configured")
