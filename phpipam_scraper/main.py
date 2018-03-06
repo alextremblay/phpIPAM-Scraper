@@ -1,6 +1,7 @@
 # Python Standard Library imports
 from getpass import getpass
 import re
+from urllib.parse import urljoin
 
 # Internal Module imports
 from .config import get, delete
@@ -8,7 +9,7 @@ from .log import getLogger
 
 # External Package imports
 import requests
-# from lxml import etree
+from furl import furl
 from bs4 import BeautifulSoup  # Package name: BeautifulSoup4
 from bs4.element import Tag
 
@@ -99,6 +100,7 @@ class IPAM(object):
         else:
             raise Exception('No phpIPAM password defined')
 
+        self.url = furl(self.url)
         self.token = None
         self.session = requests.session()
         self.login()
@@ -114,7 +116,7 @@ class IPAM(object):
         :rtype: list(dict)
         """
         log.info(f'Searching for {keyword} in Devices page...')
-        device_url_path = self.url + '/app/tools/devices/devices-print.php'
+        device_url_path = self.url.copy().add(path='app/tools/devices/devices-print.php')
         log.debug(f'device_url_path: {device_url_path}')
         search_parameters = {'ffield': 'hostname', 'fval': keyword, 'direction': 'hostname|asc'}
         soup = self._get_page(device_url_path, search_parameters)
@@ -140,7 +142,7 @@ class IPAM(object):
         :rtype: list(dict)
         """
         log.info(f'Searching for {keyword} in Search page...')
-        search_url_path = self.url + '/app/tools/search/search-results.php'
+        search_url_path = self.url.copy().add(path='app/tools/search/search-results.php')
         log.debug(f'search_url_path: {search_url_path}')
         search_parameters = {'ip': keyword, 'addresses': 'on', 'subnets': 'off', 'vlans': 'off', 'vrf': 'off'}
         soup = self._get_page(search_url_path, search_parameters)
@@ -182,7 +184,7 @@ class IPAM(object):
 
         """
         log.info('Logging into phpIPAM...')
-        auth_url_path = self.url + '/app/login/login_check.php'
+        auth_url_path = self.url.copy().add(path='app/login/login_check.php')
         auth = {'ipamusername': self.username, 'ipampassword': self.password}
         response = self.session.post(auth_url_path, data=auth)
         if 'Invalid username' in response.text:
